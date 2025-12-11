@@ -48,6 +48,11 @@
         .input-error { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
         .drag-active { border-color: #0ea5e9 !important; background-color: #f0f9ff !important; }
         
+        .kpi-card { transition: all 0.3s ease; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+        .img-hover-zoom { transition: transform 0.3s ease; }
+        .img-hover-zoom:hover { transform: scale(1.05); }
+
         /* ===== PROFESSIONAL CHAT STYLES (New) ===== */
         .chat-sidebar { 
             position: fixed; top: 0; left: 0; /* Left Side */
@@ -120,7 +125,7 @@
             color: white; font-size: 12px; flex-shrink: 0; font-weight: bold;
         }
         .msg-wrapper.me .msg-avatar { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
-        .msg-wrapper.admin .msg-avatar { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); } /* Red for Admin */
+        .msg-wrapper.admin .msg-avatar { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
 
         .msg-bubble {
             max-width: 75%; padding: 12px 16px; border-radius: 18px;
@@ -153,7 +158,6 @@
         .attach-btn { color: #64748b; cursor: pointer; font-size: 20px; padding: 5px; transition: color 0.3s; }
         .attach-btn:hover { color: #0ea5e9; }
 
-        /* Preview Area */
         #chatPreviewArea { display: none; padding: 10px; background: #f1f5f9; border-radius: 8px; margin-bottom: 10px; position: relative; }
         #chatPreviewArea img { max-height: 80px; border-radius: 6px; border: 1px solid #cbd5e1; }
         .close-preview { position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
@@ -173,7 +177,7 @@
             <div class="absolute inset-0 border-4 border-primary-600 rounded-full border-t-transparent animate-spin"></div>
             <i class="fas fa-vote-yea absolute inset-0 flex items-center justify-center text-primary-600 text-2xl"></i>
         </div>
-        <h2 class="text-2xl font-bold text-gray-800 tracking-wide">منصة الرصد الإنتخابي - حملة ا.د. رضا عبد السلام </h2>
+        <h2 class="text-2xl font-bold text-gray-800 tracking-wide">منصة الرصد الإنتخابي  </h2>
     </div>
 
     <!-- NEW PROFESSIONAL CHAT UI -->
@@ -192,12 +196,10 @@
         </div>
 
         <div class="chat-messages" id="chatMessages">
-            <!-- Messages injected here -->
             <div class="text-center text-xs text-gray-400 my-4">بداية المحادثة</div>
         </div>
 
         <div class="chat-input-container">
-            <!-- Image Preview -->
             <div id="chatPreviewArea">
                 <img id="chatPrevImg" src="">
                 <div class="close-preview" onclick="clearChatFile()">×</div>
@@ -318,10 +320,9 @@
         function toggleSidebar() { const s = document.getElementById('mainSidebar'); const o = document.getElementById('sidebarOverlay'); if(s.classList.contains('translate-x-full')) { s.classList.remove('translate-x-full'); o.classList.remove('hidden'); } else { s.classList.add('translate-x-full'); o.classList.add('hidden'); } }
 
         // ============================================
-        // 4. Notifications & Chat Logic (UPDATED)
+        // 4. Notifications & Chat Logic
         // ============================================
         
-        // --- Notifications ---
         async function sendNotification(message, type) {
             try { await supabase.from('notifications').insert({ message: message, type: type }); } 
             catch (err) { console.error("Notification Error:", err); }
@@ -361,7 +362,6 @@
             if(n.type === 'complaint') icon = 'fa-exclamation-triangle text-red-500';
             if(n.type === 'report') icon = 'fa-file-alt text-purple-500';
             if(n.type === 'lock') icon = 'fa-lock text-purple-600';
-            
             return `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition flex gap-3 ${!n.is_read ? 'bg-blue-50/50' : ''}"><div class="mt-1"><i class="fas ${icon}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.message}</p><span class="text-[10px] text-gray-400 font-mono">${new Date(n.created_at).toLocaleTimeString('ar-EG')}</span></div></div>`;
         }
 
@@ -379,7 +379,6 @@
         const chatInput = document.getElementById("chatInput");
         const chatMessages = document.getElementById("chatMessages");
 
-        // UI Toggles
         chatTrigger.onclick = () => {
             chatSidebar.classList.add("open");
             chatOverlay.classList.add("open");
@@ -388,25 +387,17 @@
             setTimeout(() => chatInput.focus(), 300);
         };
 
-        const closeChats = () => {
-            chatSidebar.classList.remove("open");
-            chatOverlay.classList.remove("open");
-        };
-
+        const closeChats = () => { chatSidebar.classList.remove("open"); chatOverlay.classList.remove("open"); };
         closeChat.onclick = closeChats;
         chatOverlay.onclick = closeChats;
 
-        // Initialize Chat
         async function initChatSystem() {
             chatMessages.innerHTML = '<div class="text-center text-gray-400 text-xs my-4">جاري التحميل...</div>';
-            
-            // Load History
             const { data: history } = await supabase.from('messages').select('*').order('created_at', {ascending: true}).limit(100);
             chatMessages.innerHTML = '<div class="text-center text-gray-400 text-xs my-4">بداية المحادثة</div>';
             if(history) history.forEach(msg => appendMessage(msg));
             scrollChat();
 
-            // Realtime
             supabase.channel('public_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                 appendMessage(payload.new); 
                 scrollChat();
@@ -419,30 +410,22 @@
             }).subscribe();
         }
 
-        // Render Message
         function appendMessage(msg) {
             const isMe = msg.sender === currentUser.name;
             const isAdmin = msg.sender === 'ADMIN' || msg.sender.includes('Admin');
-            
-            // Determine Avatar Text (Number or First Letter)
             let avatarTxt = '👤';
             if (isAdmin) avatarTxt = 'A';
             else {
-                // Try extracting numbers (Committee ID)
                 const numMatch = msg.sender.match(/\d+/);
                 if(numMatch) avatarTxt = numMatch[0];
                 else avatarTxt = msg.sender.charAt(0);
             }
-
             const wrapperClass = isMe ? 'me' : (isAdmin ? 'admin' : '');
-            
             let content = `<div class="msg-bubble">${msg.message || ''}</div>`;
             if(msg.type === 'image' && msg.media_url) {
                 content = `<div class="msg-bubble"><img src="${msg.media_url}" class="max-w-full rounded-lg cursor-pointer mb-1" onclick="showImage('${msg.media_url}')"><p>${msg.message || ''}</p></div>`;
             }
-
             const time = new Date(msg.created_at).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-
             const html = `
                 <div class="msg-wrapper ${wrapperClass}">
                     <div class="msg-avatar" title="${msg.sender}">${avatarTxt}</div>
@@ -451,15 +434,12 @@
                         ${content}
                         <div class="msg-time">${time}</div>
                     </div>
-                </div>
-            `;
-            
+                </div>`;
             chatMessages.insertAdjacentHTML('beforeend', html);
         }
 
         function scrollChat() { chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-        // File Handling
         function handleChatFile(input) {
             if(input.files[0]) {
                 chatFile = input.files[0];
@@ -472,58 +452,25 @@
             }
         }
 
-        function clearChatFile() {
-            chatFile = null;
-            document.getElementById('chatFileInput').value = '';
-            document.getElementById('chatPreviewArea').style.display = 'none';
-        }
+        function clearChatFile() { chatFile = null; document.getElementById('chatFileInput').value = ''; document.getElementById('chatPreviewArea').style.display = 'none'; }
 
-        // Send Message
         async function sendChatMessage() {
             const text = chatInput.value.trim();
             if(!text && !chatFile) return;
-
-            // Optimistic UI Reset
-            chatInput.value = '';
-            const fileToSend = chatFile;
-            clearChatFile();
-
-            let mediaUrl = null;
-            let type = 'text';
-
+            chatInput.value = ''; const fileToSend = chatFile; clearChatFile();
+            let mediaUrl = null; let type = 'text';
             try {
                 if(fileToSend) {
-                    type = 'image';
-                    const fileName = `chat/${Date.now()}_${Math.random().toString(36).substring(7)}`;
-                    // Upload to 'chat-images' bucket (Ensure this bucket exists in Supabase Storage)
+                    type = 'image'; const fileName = `chat/${Date.now()}_${Math.random().toString(36).substring(7)}`;
                     const { error } = await supabase.storage.from('chat-images').upload(fileName, fileToSend);
-                    
-                    if(!error) {
-                        const { data } = supabase.storage.from('chat-images').getPublicUrl(fileName);
-                        mediaUrl = data.publicUrl;
-                    } else {
-                        // Fallback to 'violation-images' if 'chat-images' doesn't exist
-                        await supabase.storage.from('violation-images').upload(fileName, fileToSend);
-                        const { data } = supabase.storage.from('violation-images').getPublicUrl(fileName);
-                        mediaUrl = data.publicUrl;
-                    }
+                    if(!error) { const { data } = supabase.storage.from('chat-images').getPublicUrl(fileName); mediaUrl = data.publicUrl; }
+                    else { await supabase.storage.from('violation-images').upload(fileName, fileToSend); const { data } = supabase.storage.from('violation-images').getPublicUrl(fileName); mediaUrl = data.publicUrl; }
                 }
-                
-                await supabase.from('messages').insert({
-                    sender: currentUser.name,
-                    message: text,
-                    type: type,
-                    media_url: mediaUrl
-                });
-            } catch(err) {
-                console.error("Chat Error", err);
-            }
+                await supabase.from('messages').insert({ sender: currentUser.name, message: text, type: type, media_url: mediaUrl });
+            } catch(err) { console.error("Chat Error", err); }
         }
 
-        // Handle Enter Key
-        chatInput.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") sendChatMessage();
-        });
+        chatInput.addEventListener("keypress", function(e) { if (e.key === "Enter") sendChatMessage(); });
 
         // ============================================
         // 5. Admin Dashboard
@@ -854,14 +801,14 @@
                         <div class="bg-white p-4 rounded-xl shadow-card mb-6 border-r-4 border-blue-600 flex flex-col sm:flex-row justify-between items-center gap-4">
                             <div class="flex items-center gap-4">
                                 <div class="p-3 rounded-full bg-blue-50 text-blue-600"><i class="fas fa-file-invoice text-xl"></i></div>
-                                <div><h3 class="text-lg font-bold text-gray-800">محضر الفرز الرسمي</h3><p class="text-sm text-gray-500">يرجى تصوير المحضر (Form 6) ورفعه هنا</p></div>
+                                <div><h3 class="text-lg font-bold text-gray-800">محضر الفرز الرسمي</h3><p class="text-sm text-gray-500">يرجى تصوير المحضر ورفعه هنا</p></div>
                             </div>
                             <button onclick="openSortingModal()" class="px-6 py-2.5 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"><i class="fas fa-camera"></i> رفع المحضر</button>
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div class="lg:col-span-2 space-y-6"><div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden"><div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between"><h3 class="font-bold text-gray-800">استمارة رصد الأصوات</h3><span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">الحفظ تلقائي</span></div><div class="p-6 space-y-4">${data.candidates.map(c => `<div class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors bg-white"><div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center ml-4 text-gray-500 font-bold text-lg">${c.id}</div><div class="flex-1"><h4 class="font-bold text-gray-800 text-lg">${c.name}</h4></div><div class="flex items-center gap-2 relative"><input type="number" min="0" data-candidate-id="${c.id}" class="w-28 p-3 text-center text-xl font-mono font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100 text-gray-500' : ''}" value="${c.current_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateVote('${c.id}', this)"><div id="status-${c.id}" class="absolute -left-8 text-lg"></div></div></div>`).join('')}<div class="mt-6 pt-6 border-t border-dashed border-gray-300"><div class="flex items-center p-4 border border-red-200 bg-red-50/30 rounded-lg"><div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center ml-4 text-red-500"><i class="fas fa-ban text-xl"></i></div><div class="flex-1"><h4 class="font-bold text-gray-800">الأصوات الباطلة</h4></div><div class="relative"><input type="number" id="invalidVotes" min="0" class="w-28 p-3 text-center text-xl font-mono font-bold border border-red-200 rounded-lg text-red-600 focus:ring-2 focus:ring-red-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100' : ''}" value="${data.committee.invalid_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateInvalidVotes(this)"></div></div></div></div></div></div>
-                            <div class="space-y-6"><div class="bg-primary-800 text-white rounded-xl shadow-lg p-6 relative overflow-hidden"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div><div class="relative z-10"><p class="text-primary-200 text-sm mb-1">إجمالي المقيدين باللجنة</p><h2 class="text-4xl font-bold font-mono tracking-wider mb-6">${data.committee.total_registered_voters.toLocaleString('en-US')}</h2><div class="grid grid-cols-2 gap-4 border-t border-white/20 pt-4"><div><p class="text-primary-200 text-xs">الأصوات</p><p id="totalVotesDisplay" class="text-2xl font-bold font-mono">0</p></div><div><p class="text-primary-200 text-xs">المشاركة</p><p id="participationDisplay" class="text-2xl font-bold font-mono">0%</p></div></div></div></div><div class="bg-white rounded-xl shadow-card border border-gray-100 p-6 h-96 flex flex-col"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-exclamation-triangle text-warning"></i> محاضر الفرز والمخالفات</h3><button onclick="showAddViolationModal()" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100 transition">+ تسجيل بلاغ</button></div><div id="violationsList" class="flex-1 overflow-y-auto space-y-3 pr-1"></div></div></div>
+                            <div class="lg:col-span-2 space-y-6"><div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden"><div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between"><h3 class="font-bold text-gray-800">استمارة رصد الأصوات</h3><span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">الحفظ تلقائي</span></div><div class="p-6 space-y-4">${data.candidates.map(c => `<div class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors bg-white"><div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center ml-4 text-gray-500 font-bold text-lg">${c.id}</div><div class="flex-1"><h4 class="font-bold text-gray-800 text-lg">${c.name}</h4></div><div class="flex items-center gap-2 relative"><input type="number" id="vote-input-${c.id}" min="0" data-candidate-id="${c.id}" class="w-28 p-3 text-center text-xl font-mono font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100 text-gray-500' : ''}" value="${c.current_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateVote('${c.id}', this)"><div id="status-${c.id}" class="absolute -left-8 text-lg"></div><button onclick="incrementVote(${c.id})" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:shadow-lg transition-all duration-200 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" ${isLocked ? 'disabled' : ''}><i class="fas fa-plus"></i><span>إضافة صوت</span></button></div></div>`).join('')}<div class="mt-6 pt-6 border-t border-dashed border-gray-300"><div class="flex items-center p-4 border border-red-200 bg-red-50/30 rounded-lg"><div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center ml-4 text-red-500"><i class="fas fa-ban text-xl"></i></div><div class="flex-1"><h4 class="font-bold text-gray-800">الأصوات الباطلة</h4></div><div class="relative"><input type="number" id="invalidVotes" min="0" class="w-28 p-3 text-center text-xl font-mono font-bold border border-red-200 rounded-lg text-red-600 focus:ring-2 focus:ring-red-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100' : ''}" value="${data.committee.invalid_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateInvalidVotes(this)"></div></div></div></div></div></div>
+                            <div class="space-y-6"><div class="bg-primary-800 text-white rounded-xl shadow-lg p-6 relative overflow-hidden"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div><div class="relative z-10"><p class="text-primary-200 text-sm mb-1">إجمالي المقيدين باللجنة</p><h2 class="text-4xl font-bold font-mono tracking-wider mb-6">${data.committee.total_registered_voters.toLocaleString('en-US')}</h2><div class="grid grid-cols-2 gap-4 border-t border-white/20 pt-4"><div><p class="text-primary-200 text-xs">الأصوات</p><p id="totalVotesDisplay" class="text-2xl font-bold font-mono">0</p></div><div><p class="text-primary-200 text-xs">المشاركة</p><p id="participationDisplay" class="text-2xl font-bold font-mono">0%</p></div></div></div></div><div class="bg-white rounded-xl shadow-card border border-gray-100 p-6 h-96 flex flex-col"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-exclamation-triangle text-warning"></i> رصد المخالفات الانتخابية</h3><button onclick="showAddViolationModal()" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100 transition">+ تسجيل بلاغ</button></div><div id="violationsList" class="flex-1 overflow-y-auto space-y-3 pr-1"></div></div></div>
                         </div>
                     </main>
                 </div>
@@ -883,6 +830,16 @@
                 return { ...candidate, current_votes: vote ? vote.count : 0 };
             });
             return { committee: c.data, candidates, violations: viol.data };
+        }
+
+        // NEW: Increment Vote Function
+        function incrementVote(candidateId) {
+            const input = document.getElementById(`vote-input-${candidateId}`);
+            if (input) {
+                let currentValue = parseInt(input.value) || 0;
+                input.value = currentValue + 1;
+                updateVote(candidateId, input); // Call existing logic
+            }
         }
 
         async function updateVote(candidateId, input) {
