@@ -631,7 +631,7 @@
             // Ensure committees data is loaded to get names
             if (!adminGlobalData.committees.length) await loadAdminData();
 
-            app.innerHTML = `${getSidebarHTML('بلاغات المخالفات')}<div class="flex-1 flex flex-col h-full overflow-hidden bg-background">${getHeaderHTML('سجل  محاضر الفرز و المخالفات الواردة', 'متابعة حية للبلاغات')}<main class="flex-1 overflow-y-auto p-6 fade-in"><div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="col-span-full flex justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div></div></div></main></div>`;
+            app.innerHTML = `${getSidebarHTML('بلاغات المخالفات')}<div class="flex-1 flex flex-col h-full overflow-hidden bg-background">${getHeaderHTML('سجل المخالفات الواردة', 'متابعة حية للبلاغات')}<main class="flex-1 overflow-y-auto p-6 fade-in"><div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="col-span-full flex justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div></div></div></main></div>`;
             
             const { data: reports, error } = await supabase.from('violation_reports').select('*').order('created_at', { ascending: false });
             const grid = document.getElementById('violationsGrid'); grid.innerHTML = '';
