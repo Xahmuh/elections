@@ -23,7 +23,7 @@
                         secondary: { 500: '#64748b', 900: '#0f172a' },
                         success: '#10b981', warning: '#f59e0b', danger: '#ef4444',
                         brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81' },
-                        vip: { 500: '#8b5cf6', 600: '#7c3aed' }
+                        vip: { 500: '#8b5cf6', 600: '#7c3aed', 100: '#ede9fe' }
                     },
                     fontFamily: { sans: ['Cairo', 'sans-serif'], mono: ['Roboto Mono', 'monospace'] },
                     boxShadow: { 'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)' }
@@ -41,31 +41,27 @@
             padding: 0;
             background-color: #f8fafc; 
             font-family: 'Cairo', sans-serif;
-            /* Allow native scrolling on mobile, lock on desktop */
             overflow-x: hidden;
             height: 100%;
         }
 
-        /* Desktop: App-like feel */
         @media (min-width: 1024px) {
             body { height: 100vh; overflow: hidden; }
         }
 
-        /* #app Container: Ensures Sidebar & Content sit side-by-side */
         #app {
             display: flex;
-            flex-direction: row; /* Critical Fix for Desktop */
+            flex-direction: row; 
             height: 100%;
             width: 100%;
             overflow: hidden;
         }
 
-        /* Mobile specific adjustments inside #app */
         @media (max-width: 1023px) {
             #app {
-                flex-direction: column; /* On mobile, structure is vertical */
-                overflow-y: auto; /* Allow scroll on mobile */
-                padding-bottom: 80px; /* Space for footer */
+                flex-direction: column; 
+                overflow-y: auto; 
+                padding-bottom: 80px; 
             }
         }
 
@@ -98,7 +94,7 @@
             width: 100%; max-width: 380px;
             background: #ffffff;
             box-shadow: 2px 0 20px rgba(0,0,0,0.15);
-            z-index: 10001; /* Above Overlay */
+            z-index: 10001; 
             transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; flex-direction: column;
@@ -211,7 +207,6 @@
             padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 8px); 
         }
 
-        /* Sidebar Z-Index Fix: Must be higher than Footer (50) on Mobile */
         #mainSidebar { z-index: 70; }
         #sidebarOverlay { z-index: 60; }
 
@@ -422,7 +417,6 @@
                         <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
                     </div>
                     <div class="px-6 py-6 border-b border-gray-700/30"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary-500 to-primary-700 flex items-center justify-center text-sm font-bold shadow-lg">${currentUser.name.charAt(0)}</div><div><p class="font-medium text-sm text-gray-100">${currentUser.name}</p><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-primary-900/50 text-primary-200 border border-primary-700/50">${currentUser.role}</span></div></div></div>
-                    <!-- Added pb-20 to allow scrolling past fixed footer on mobile menu -->
                     <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto pb-24">
                         <a href="#" onclick="${isAdmin ? 'renderAdminDashboard(); toggleSidebar()' : 'location.reload()'}" class="flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800 text-white transition-colors"><i class="fas fa-chart-pie w-6 text-lg ml-2"></i> لوحة المعلومات</a>
                         ${isAdmin ? `<a href="#" onclick="renderCommitteesPage(); toggleSidebar()" class="flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800 text-white transition-colors"><i class="fas fa-th-large w-6 text-lg ml-2 text-blue-400"></i> سجل اللجان</a>
@@ -548,19 +542,128 @@
         if(chatInput) chatInput.addEventListener("keypress", function(e) { if (e.key === "Enter") sendChatMessage(); });
 
         // ============================================
-        // 4. Admin Dashboard
+        // 4. Admin Dashboard (UPDATED)
         // ============================================
         async function renderAdminDashboard() {
             currentPageContext = 'dashboard';
             const app = document.getElementById('app');
-            // MODIFIED: 'flex flex-col w-full bg-background lg:h-full lg:overflow-hidden' 
-            // This ensures content goes to the left of sidebar on desktop
             app.innerHTML = `
                 ${getSidebarHTML('لوحة المدير')}
                 <div class="flex-1 flex flex-col w-full bg-background lg:h-full lg:overflow-hidden">
                     ${getHeaderHTML('لوحة القيادة المركزية للحملة', `أهلاً بك، ${currentUser.name}`)}
                     <main class="flex-1 p-6 space-y-8 fade-in lg:overflow-y-auto pb-32">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-blue-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-users text-8xl text-blue-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الناخبون المسجلون</p><h3 class="text-3xl font-bold text-gray-800" id="totalRegistered">0</h3></div><div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 100%"></div></div></div><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-green-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-vote-yea text-8xl text-green-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">أصوات صحيحة</p><h3 class="text-3xl font-bold text-gray-800" id="totalValid">0</h3></div><div class="flex items-center gap-2 mt-2"><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full" id="participationRate">0%</span><span class="text-xs text-gray-400">نسبة المشاركة</span></div></div><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-red-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-ban text-8xl text-red-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الأصوات الباطلة</p><h3 class="text-3xl font-bold text-gray-800" id="totalInvalid">0</h3></div><div class="w-full bg-gray-100 rounded-full h-1.5"><div id="invalidBar" class="bg-red-500 h-1.5 rounded-full" style="width: 0%"></div></div></div><div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border-r-4 border-accent-500 relative overflow-hidden"><div class="flex justify-between items-center mb-3"><p class="text-gray-500 text-sm font-medium">توزيع الأحياء</p><i class="fas fa-map-marked-alt text-accent-500"></i></div><div class="space-y-4"><div><div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي غرب (1-34)</span><span class="font-mono text-brand-600" id="westVotes">0</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div id="westBar" class="bg-brand-500 h-2 rounded-full" style="width: 0%"></div></div><div class="text-[10px] text-right mt-0.5 text-gray-400" id="westRate">مشاركة: 0%</div></div><div><div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي شرق (35-59)</span><span class="font-mono text-purple-600" id="eastVotes">0</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div id="eastBar" class="bg-purple-500 h-2 rounded-full" style="width: 0%"></div></div><div class="text-[10px] text-right mt-0.5 text-gray-400" id="eastRate">مشاركة: 0%</div></div></div></div></div><div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-1 bg-gradient-to-br from-vip-600 to-vip-500 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="absolute -right-6 -top-6 bg-white/20 w-32 h-32 rounded-full blur-2xl"></div><div class="relative z-10"><div class="flex items-center justify-between mb-4"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-star text-yellow-300 text-xl"></i></div><span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">متابعة خاصة</span></div><p class="text-vip-100 text-sm mb-1">إجمالي أصوات ${APP_CONFIG.candidates[4]}</p><h3 class="text-4xl font-bold font-mono tracking-wider mb-2" id="cand4Total">0</h3><p class="text-xs text-vip-100 opacity-80" id="cand4Name">جاري التحميل...</p><div class="mt-4 pt-4 border-t border-white/20 flex justify-between items-center"><span class="text-xs">النسبة من الإجمالي</span><span class="font-bold text-lg" id="cand4Percent">0%</span></div></div></div><div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2"><i class="fas fa-chart-bar text-primary-600"></i> تفاصيل أصوات المرشحين</h3><div id="candidatesColumnChart" class="w-full h-64"></div></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">نسب التوزيع (Donut)</h3><div id="candidatesChart" class="flex justify-center"></div></div><div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">مقارنة الأحياء</h3><div id="districtsChart"></div></div></div><div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-6 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4"><h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-table text-brand-600"></i> سجل اللجان (عرض الجدول)</h3><div class="flex flex-wrap items-center gap-2 w-full md:w-auto"><div class="relative w-full md:w-48"><i class="fas fa-search absolute right-3 top-3 text-gray-400"></i><input type="text" id="dashSearch" onkeyup="filterDashboardTable()" placeholder="بحث برقم اللجنة..." class="w-full pr-9 pl-4 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></div><select id="dashDistrict" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الأحياء</option><option value="west">حي غرب</option><option value="east">حي شرق</option></select><select id="dashStatus" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الحالات</option><option value="finalized">مثبتة نهائياً</option><option value="active">جارية (نشطة)</option><option value="pending">لم تبدأ</option></select><button onclick="exportAdminTableToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> تصدير Excel</button></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-right text-gray-500" id="committeesTable"><thead class="text-xs text-gray-700 uppercase bg-gray-100 whitespace-nowrap"><tr><th class="px-4 py-3">#</th><th class="px-4 py-3">اسم اللجنة</th><th class="px-4 py-3">المقيدين</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[1]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[2]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[3]}</th><th class="px-4 py-3 bg-blue-50 text-brand-700">${APP_CONFIG.candidates[4]}</th><th class="px-4 py-3">أصوات صحيحة</th><th class="px-4 py-3">باطلة</th><th class="px-4 py-3">الحالة</th><th class="px-4 py-3">الحي</th><th class="px-4 py-3">الإجراءات</th></tr></thead><tbody id="dashboardTableBody"></tbody></table></div></div>
+                        
+                        <!-- القسم الأول: بطاقات الأرقام (KPI Cards) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <!-- بطاقة 1: الناخبون المسجلون -->
+                            <div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-blue-500 relative overflow-hidden group">
+                                <div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-users text-8xl text-blue-600"></i></div>
+                                <div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الناخبون المسجلون</p><h3 class="text-3xl font-bold text-gray-800" id="totalRegistered">0</h3></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 100%"></div></div>
+                            </div>
+                            <!-- بطاقة 2: الأصوات الصحيحة -->
+                            <div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-green-500 relative overflow-hidden group">
+                                <div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-vote-yea text-8xl text-green-600"></i></div>
+                                <div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">أصوات صحيحة</p><h3 class="text-3xl font-bold text-gray-800" id="totalValid">0</h3></div>
+                                <div class="flex items-center gap-2 mt-2"><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full" id="participationRate">0%</span><span class="text-xs text-gray-400">نسبة المشاركة</span></div>
+                            </div>
+                            <!-- بطاقة 3: الأصوات الباطلة -->
+                            <div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-red-500 relative overflow-hidden group">
+                                <div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-ban text-8xl text-red-600"></i></div>
+                                <div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الأصوات الباطلة</p><h3 class="text-3xl font-bold text-gray-800" id="totalInvalid">0</h3></div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5"><div id="invalidBar" class="bg-red-500 h-1.5 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <!-- بطاقة 4: توزيع الأحياء -->
+                            <div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border-r-4 border-accent-500 relative overflow-hidden">
+                                <div class="flex justify-between items-center mb-3"><p class="text-gray-500 text-sm font-medium">توزيع الأحياء</p><i class="fas fa-map-marked-alt text-accent-500"></i></div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي غرب (1-34)</span><span class="font-mono text-brand-600" id="westVotes">0</span></div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2"><div id="westBar" class="bg-brand-500 h-2 rounded-full" style="width: 0%"></div></div>
+                                        <div class="text-[10px] text-right mt-0.5 text-gray-400" id="westRate">مشاركة: 0%</div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي شرق (35-59)</span><span class="font-mono text-purple-600" id="eastVotes">0</span></div>
+                                        <div class="w-full bg-gray-100 rounded-full h-2"><div id="eastBar" class="bg-purple-500 h-2 rounded-full" style="width: 0%"></div></div>
+                                        <div class="text-[10px] text-right mt-0.5 text-gray-400" id="eastRate">مشاركة: 0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- القسم الثاني: بطاقة المرشح VIP والرسم البياني الرئيسي -->
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                            <!-- بطاقة المتابعة الخاصة (VIP Candidate) - مع الصورة -->
+                            <div class="lg:col-span-1 bg-gradient-to-br from-vip-600 to-vip-500 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden transform hover:-translate-y-1 transition duration-300">
+                                <div class="absolute -right-6 -top-6 bg-white/20 w-32 h-32 rounded-full blur-2xl"></div>
+                                <div class="relative z-10">
+                                    <div class="flex items-center justify-between mb-6">
+                                        <div class="w-20 h-20 rounded-full border-4 border-white/20 overflow-hidden shadow-lg bg-white/10">
+                                            <img src="https://i.ibb.co/Z1Vd6W57/Artboard-1.png" alt="Candidate 4" class="w-full h-full object-cover transform hover:scale-110 transition duration-500">
+                                        </div>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <span class="text-xs font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm shadow-sm border border-white/10">متابعة خاصة</span>
+                                            <i class="fas fa-star text-yellow-300 text-sm animate-pulse"></i>
+                                        </div>
+                                    </div>
+                                    <p class="text-vip-100 text-sm mb-1 font-medium">إجمالي أصوات ${APP_CONFIG.candidates[4]}</p>
+                                    <h3 class="text-4xl font-bold font-mono tracking-wider mb-2 drop-shadow-md" id="cand4Total">0</h3>
+                                    <p class="text-xs text-vip-100 opacity-80" id="cand4Name">جاري التحميل...</p>
+                                    
+                                    <!-- الفوتر: تفاصيل النسب المئوية (غرب / شرق / إجمالي) -->
+                                    <div class="mt-4 pt-4 border-t border-white/20 flex flex-col gap-3">
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="bg-white/10 rounded-lg p-2 text-center backdrop-blur-sm border border-white/5 hover:bg-white/20 transition">
+                                                <p class="text-[10px] text-vip-100 mb-0.5">حي غرب</p>
+                                                <span class="font-bold text-base text-white font-mono" id="cand4WestPercent">0%</span>
+                                            </div>
+                                            <div class="bg-white/10 rounded-lg p-2 text-center backdrop-blur-sm border border-white/5 hover:bg-white/20 transition">
+                                                <p class="text-[10px] text-vip-100 mb-0.5">حي شرق</p>
+                                                <span class="font-bold text-base text-white font-mono" id="cand4EastPercent">0%</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center bg-black/20 px-3 py-2 rounded-lg">
+                                            <span class="text-xs text-vip-100">النسبة العامة</span>
+                                            <span class="font-bold text-xl text-white drop-shadow font-mono" id="cand4Percent">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- الرسم البياني الرئيسي -->
+                            <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
+                                    <i class="fas fa-chart-bar text-primary-600"></i> تفاصيل أصوات المرشحين
+                                </h3>
+                                <div id="candidatesColumnChart" class="w-full h-64"></div>
+                            </div>
+                        </div>
+
+                        <!-- القسم الثالث: الرسوم البيانية الثانوية -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">نسب التوزيع (Donut)</h3><div id="candidatesChart" class="flex justify-center"></div></div>
+                            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">مقارنة الأحياء</h3><div id="districtsChart"></div></div>
+                        </div>
+
+                        <!-- القسم الرابع: الجدول -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-6 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-table text-brand-600"></i> سجل اللجان (عرض الجدول)</h3>
+                                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                                    <div class="relative w-full md:w-48"><i class="fas fa-search absolute right-3 top-3 text-gray-400"></i><input type="text" id="dashSearch" onkeyup="filterDashboardTable()" placeholder="بحث برقم اللجنة..." class="w-full pr-9 pl-4 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></div>
+                                    <select id="dashDistrict" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الأحياء</option><option value="west">حي غرب</option><option value="east">حي شرق</option></select>
+                                    <select id="dashStatus" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الحالات</option><option value="finalized">مثبتة نهائياً</option><option value="active">جارية (نشطة)</option><option value="pending">لم تبدأ</option></select>
+                                    <button onclick="exportAdminTableToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> تصدير Excel</button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-right text-gray-500" id="committeesTable">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-100 whitespace-nowrap"><tr><th class="px-4 py-3">#</th><th class="px-4 py-3">اسم اللجنة</th><th class="px-4 py-3">المقيدين</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[1]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[2]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[3]}</th><th class="px-4 py-3 bg-blue-50 text-brand-700">${APP_CONFIG.candidates[4]}</th><th class="px-4 py-3">أصوات صحيحة</th><th class="px-4 py-3">باطلة</th><th class="px-4 py-3">الحالة</th><th class="px-4 py-3">الحي</th><th class="px-4 py-3">الإجراءات</th></tr></thead>
+                                    <tbody id="dashboardTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </main>
                 </div>
                 <div id="detailsModal" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"><div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800 text-lg">التفاصيل</h3><button onclick="document.getElementById('detailsModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div id="modalContent" class="p-6 space-y-4"></div></div></div>`;
@@ -580,7 +683,15 @@
         }
 
         function processAdminData() {
-            let stats = { totalRegistered: 0, totalValid: 0, totalInvalid: 0, west: { valid: 0, registered: 0 }, east: { valid: 0, registered: 0 }, candidateVotes: {} };
+            // Updated stats object to include cand4Votes per district
+            let stats = { 
+                totalRegistered: 0, 
+                totalValid: 0, 
+                totalInvalid: 0, 
+                west: { valid: 0, registered: 0, cand4Votes: 0 }, 
+                east: { valid: 0, registered: 0, cand4Votes: 0 }, 
+                candidateVotes: {} 
+            };
             adminGlobalData.candidates.forEach(c => stats.candidateVotes[c.id] = { name: c.name, count: 0 });
             
             adminGlobalData.committees.forEach(c => {
@@ -602,8 +713,16 @@
                 stats.totalInvalid += invalid; 
                 stats.totalValid += committeeValid;
                 
-                if (cId <= 34) { stats.west.valid += committeeValid + invalid; stats.west.registered += registered; } 
-                else { stats.east.valid += committeeValid + invalid; stats.east.registered += registered; }
+                // Track stats per district
+                if (cId <= 34) { 
+                    stats.west.valid += committeeValid; // Keep valid purely as valid count
+                    stats.west.registered += registered; 
+                    stats.west.cand4Votes += c.cand4Votes; // Track cand 4 West votes
+                } else { 
+                    stats.east.valid += committeeValid; 
+                    stats.east.registered += registered;
+                    stats.east.cand4Votes += c.cand4Votes; // Track cand 4 East votes
+                }
                 
                 committeeVotes.forEach(v => { if (stats.candidateVotes[v.candidate_id]) stats.candidateVotes[v.candidate_id].count += (v.count || 0); });
             });
@@ -631,8 +750,22 @@
             if (cand4Data) {
                 if(document.getElementById('cand4Total')) document.getElementById('cand4Total').innerText = cand4Data.count.toLocaleString();
                 if(document.getElementById('cand4Name')) document.getElementById('cand4Name').innerText = cand4Data.name;
+                
                 const totalRaw = stats.totalValid * 2;
                 if(document.getElementById('cand4Percent')) document.getElementById('cand4Percent').innerText = `${totalRaw > 0 ? ((cand4Data.count / totalRaw) * 100).toFixed(1) : 0}%`;
+
+                // Update New District Percentages for Candidate 4
+                const westRaw = stats.west.valid * 2;
+                const eastRaw = stats.east.valid * 2;
+                
+                if(document.getElementById('cand4WestPercent')) {
+                    const wPct = westRaw > 0 ? ((stats.west.cand4Votes / westRaw) * 100).toFixed(1) : 0;
+                    document.getElementById('cand4WestPercent').innerText = `${wPct}%`;
+                }
+                if(document.getElementById('cand4EastPercent')) {
+                    const ePct = eastRaw > 0 ? ((stats.east.cand4Votes / eastRaw) * 100).toFixed(1) : 0;
+                    document.getElementById('cand4EastPercent').innerText = `${ePct}%`;
+                }
             }
             renderAdminCharts(stats); filterDashboardTable(); if(document.getElementById('pageGrid')) filterSharedGrid('page');
         }
