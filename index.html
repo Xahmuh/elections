@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title> منصة الرصد الإنتخابي - حملة ا.د. رضا عبد السلام</title>
     
     <!-- Libraries -->
@@ -35,7 +35,40 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap');
         
-        body { background-color: #f8fafc; font-family: 'Cairo', sans-serif; }
+        /* === GLOBAL SCROLL & LAYOUT FIX === */
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc; 
+            font-family: 'Cairo', sans-serif;
+            /* Allow native scrolling on mobile, lock on desktop */
+            overflow-x: hidden;
+            height: 100%;
+        }
+
+        /* Desktop: App-like feel */
+        @media (min-width: 1024px) {
+            body { height: 100vh; overflow: hidden; }
+        }
+
+        /* #app Container: Ensures Sidebar & Content sit side-by-side */
+        #app {
+            display: flex;
+            flex-direction: row; /* Critical Fix for Desktop */
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* Mobile specific adjustments inside #app */
+        @media (max-width: 1023px) {
+            #app {
+                flex-direction: column; /* On mobile, structure is vertical */
+                overflow-y: auto; /* Allow scroll on mobile */
+                padding-bottom: 80px; /* Space for footer */
+            }
+        }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -54,19 +87,19 @@
         .img-hover-zoom:hover { transform: scale(1.05); }
 
         /* Realtime Indicator Style */
-        #rt-indicator { position: fixed; bottom: 20px; right: 20px; z-index: 9999; width: 14px; height: 14px; border-radius: 50%; background: #94a3b8; box-shadow: 0 0 10px rgba(0,0,0,0.2); transition: all 0.3s; border: 2px solid white; }
+        #rt-indicator { position: fixed; bottom: 85px; right: 20px; z-index: 9999; width: 14px; height: 14px; border-radius: 50%; background: #94a3b8; box-shadow: 0 0 10px rgba(0,0,0,0.2); transition: all 0.3s; border: 2px solid white; }
         #rt-indicator.connected { background: #10b981; box-shadow: 0 0 20px #10b981; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
-        /* ===== PROFESSIONAL CHAT STYLES (New) ===== */
+        /* ===== PROFESSIONAL CHAT STYLES ===== */
         .chat-sidebar { 
-            position: fixed; top: 0; left: 0; /* Left Side */
+            position: fixed; top: 0; left: 0;
             height: 100vh; height: 100dvh;
             width: 100%; max-width: 380px;
             background: #ffffff;
             box-shadow: 2px 0 20px rgba(0,0,0,0.15);
-            z-index: 10000;
-            transform: translateX(-100%); /* Slide from Left */
+            z-index: 10001; /* Above Overlay */
+            transform: translateX(-100%);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; flex-direction: column;
         }
@@ -75,18 +108,18 @@
         .chat-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.5);
-            z-index: 9999;
+            z-index: 10000;
             opacity: 0; visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s;
         }
         .chat-overlay.open { opacity: 1; visibility: visible; }
 
         #chatTrigger {
-            position: fixed; bottom: 24px; left: 24px; /* Left Button */
-            width: 60px; height: 60px;
+            position: fixed; bottom: 100px; left: 24px;
+            width: 50px; height: 50px;
             background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
             color: white; border-radius: 50%; border: none;
-            font-size: 26px; z-index: 9990; cursor: pointer;
+            font-size: 22px; z-index: 9990; cursor: pointer;
             box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
             transition: transform 0.3s, box-shadow 0.3s;
             display: flex; align-items: center; justify-content: center;
@@ -130,7 +163,7 @@
             color: white; font-size: 12px; flex-shrink: 0; font-weight: bold;
         }
         .msg-wrapper.me .msg-avatar { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
-        .msg-wrapper.admin .msg-avatar { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); } /* Red for Admin */
+        .msg-wrapper.admin .msg-avatar { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
 
         .msg-bubble {
             max-width: 75%; padding: 12px 16px; border-radius: 18px;
@@ -168,13 +201,27 @@
         #chatPreviewArea img { max-height: 80px; border-radius: 6px; border: 1px solid #cbd5e1; }
         .close-preview { position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
 
+        /* FOOTER FIX */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 8px); 
+        }
+
+        /* Sidebar Z-Index Fix: Must be higher than Footer (50) on Mobile */
+        #mainSidebar { z-index: 70; }
+        #sidebarOverlay { z-index: 60; }
+
         @media (max-width: 640px) {
             .chat-sidebar { max-width: 100%; border-radius: 0; }
-            #chatTrigger { bottom: 20px; left: 20px; width: 56px; height: 56px; font-size: 24px; }
+            #chatTrigger { width: 48px; height: 48px; font-size: 20px; left: 16px; bottom: 100px; }
         }
     </style>
 </head>
-<body class="text-secondary-900 antialiased h-screen overflow-hidden flex flex-col">
+<body class="text-secondary-900 antialiased flex flex-col h-full">
     
     <!-- Connection Indicator -->
     <div id="rt-indicator" title="حالة الاتصال المباشر بالسيرفر"></div>
@@ -205,12 +252,10 @@
         </div>
 
         <div class="chat-messages" id="chatMessages">
-            <!-- Messages injected here -->
             <div class="text-center text-xs text-gray-400 my-4">بداية المحادثة</div>
         </div>
 
         <div class="chat-input-container">
-            <!-- Image Preview -->
             <div id="chatPreviewArea">
                 <img id="chatPrevImg" src="">
                 <div class="close-preview" onclick="clearChatFile()">×</div>
@@ -230,14 +275,14 @@
     </div>
     
     <!-- App Container -->
-    <div id="app" class="flex-1 flex overflow-hidden relative"></div>
+    <div id="app"></div>
 
-    <!-- Footer -->
-    <footer class="w-full bg-[#0f1b2b] border-t border-white/10 py-4">
+    <!-- Footer (FIXED at Bottom) -->
+    <footer class="w-full bg-[#0f1b2b] border-t border-white/10 py-3 shadow-2xl">
         <div class="mx-auto max-w-4xl px-4">
-            <h2 class="text-white text-sm font-semibold text-center">منصة الرصد الانتخابي لدائرة المنصورة</h2>
-            <p class="text-center text-white/50 text-[11px] mt-1">Developed by <span class="text-white font-medium">Ahmed Elsherbini</span></p>
-            <p class="text-center text-white/40 text-[10px] mt-1">© 2025 جميع الحقوق محفوظة</p>
+            <h2 class="text-white text-xs sm:text-sm font-semibold text-center"> انشئت المنصة بواسطة  ا.محمد أحمد اسماعيل - المنسق العام </h2>
+            <p class="text-center text-white/50 text-[10px] sm:text-[11px] mt-1"> لصالح <span class="text-white font-medium">حملة معالي الوزير  ا.د. رضا عبد السلام </span></p>
+            <p class="text-center text-white/40 text-[9px] sm:text-[10px] mt-1"> دائرة المنصورة - برلمان 2025 </p>
         </div>
     </footer>
 
@@ -261,9 +306,6 @@
             }
         };
 
-        // ============================================
-        // 1. Config & State
-        // ============================================
         const SUPABASE_URL = 'https://csluxuzaferlcvibftsw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbHV4dXphZmVybGN2aWJmdHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxODU1MjksImV4cCI6MjA4MDc2MTUyOX0.KQZTp9ZTVNWmuCGuXWwrFK6-ixWcz7tO_4fvXCC-b2w';
         
@@ -274,15 +316,13 @@
         let chatFile = null;
         let adminGlobalData = { committees: [], votes: [], candidates: [] };
         let adminCharts = {};
-        
-        // Track current page to handle realtime updates smartly
         let currentPageContext = null; 
 
         const notifSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
         const msgSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
 
-// ============================================
-        // 2. Init
+        // ============================================
+        // 1. Init
         // ============================================
         function initApp() {
             if (window.supabase) {
@@ -295,15 +335,11 @@
                         if (storedUser) {
                             try {
                                 currentUser = JSON.parse(storedUser);
-                                
-                                // تشغيل الأنظمة
-                                setupGlobalRealtime(); // محاولة الاتصال الفوري
-                                startPollingFallback(); // تشغيل التحديث الدوري (احتياطي)
-                                
+                                setupGlobalRealtime();
+                                startPollingFallback(); 
                                 initChatSystem();
                                 if(currentUser.role === 'admin') initNotificationSystem();
 
-                                // توجيه المستخدم
                                 if (currentUser.role === 'admin') renderAdminDashboard();
                                 else if (currentUser.role === 'observer') renderObserverDashboard();
                                 else renderSupervisorDashboard();
@@ -316,104 +352,56 @@
         }
 
         // ============================================
-        // GLOBAL REALTIME SYSTEM (WITH RECONNECT & FALLBACK)
+        // REALTIME & SHARED LOGIC
         // ============================================
         let realtimeChannel = null;
 
         function setupGlobalRealtime() {
             console.log("🔄 Attempting Realtime connection...");
             const indicator = document.getElementById('rt-indicator');
-            
             if(realtimeChannel) supabase.removeChannel(realtimeChannel);
 
             realtimeChannel = supabase.channel('room-global-updates');
-            
             const tables = ['votes', 'committees', 'violation_reports'];
-            
             tables.forEach(table => {
                 realtimeChannel.on('postgres_changes', { event: '*', schema: 'public', table: table }, payload => {
-                    console.log(`⚡ Realtime Update on ${table}:`, payload);
                     handleGlobalChange(table, payload);
                 });
             });
-
             realtimeChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
-                    console.log('✅ Realtime Connected');
-                    if(indicator) {
-                        indicator.classList.add('connected');
-                        indicator.style.backgroundColor = '#10b981'; // Green
-                    }
+                    if(indicator) { indicator.classList.add('connected'); indicator.style.backgroundColor = '#10b981'; }
                 } else {
-                    console.log(`❌ Realtime Status: ${status}`);
-                    if(indicator) {
-                        indicator.classList.remove('connected');
-                        indicator.style.backgroundColor = '#ef4444'; // Red
-                    }
-                    
-                    // محاولة إعادة الاتصال بعد 5 ثواني إذا فشل
-                    if(status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-                        console.log("⚠️ Connection lost. Retrying in 5s...");
-                        setTimeout(setupGlobalRealtime, 5000);
-                    }
+                    if(indicator) { indicator.classList.remove('connected'); indicator.style.backgroundColor = '#ef4444'; }
+                    if(status === 'CLOSED' || status === 'CHANNEL_ERROR') setTimeout(setupGlobalRealtime, 5000);
                 }
             });
         }
 
-        // --- FALLBACK POLLING (الحل السحري) ---
-        // هذه الدالة ستعمل في الخلفية وتجلب البيانات كل 10 ثواني
-        // لضمان التحديث حتى لو السيرفر فصل الـ Realtime
         function startPollingFallback() {
-            console.log("⏰ Starting Polling Fallback Service...");
             setInterval(async () => {
-                // فقط للأدمن أو إذا كان الـ Realtime مفصول
-                const indicator = document.getElementById('rt-indicator');
-                const isConnected = indicator && indicator.classList.contains('connected');
-
-                // إذا كنت أدمن، حدث البيانات كل 10 ثواني للتأكيد (حتى لو متصل)
-                // إذا كنت مشرف، حدث فقط حالة القفل
-                if (currentUser && currentUser.role === 'admin') {
-                    // تحديث صامت (بدون Loading spinner)
-                    await loadAdminData();
-                } else if (currentUser && currentUser.role === 'supervisor') {
-                    // المشرف يحتاج فقط التحقق من حالة القفل
+                if (currentUser && currentUser.role === 'admin') await loadAdminData();
+                else if (currentUser && currentUser.role === 'supervisor') {
                     const { data } = await supabase.from('committees').select('is_finalized').eq('id', currentUser.committeeId).single();
                     if(data) {
                          const currentLocked = document.getElementById('invalidVotes') && document.getElementById('invalidVotes').disabled;
                          if(currentLocked !== data.is_finalized) renderSupervisorDashboard();
                     }
                 }
-            }, 10000); // كل 10 ثواني
+            }, 10000);
         }
 
-        
         async function handleGlobalChange(table, payload) {
-            // ADMIN LOGIC: Force refresh data immediately
             if (currentUser.role === 'admin') {
-                
-                // 1. Show Toast Notification (Feedback)
-                const Toast = Swal.mixin({
-                    toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000, timerProgressBar: true
-                });
+                const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
                 if(table === 'votes') Toast.fire({ icon: 'success', title: 'تم استلام صوت جديد!' });
                 else if(table === 'committees') Toast.fire({ icon: 'info', title: 'تحديث بيانات لجنة' });
 
-                // 2. Fetch fresh votes ONLY (Optimization) if it's a vote update
                 if (table === 'votes') {
                     const { data: newVotes } = await supabase.from('votes').select('*');
-                    if (newVotes) {
-                        adminGlobalData.votes = newVotes;
-                        processAdminData(); // Recalculate and Re-render immediately
-                    }
-                } 
-                // 3. If committee details changed, fetch everything to be safe
-                else {
-                    await loadAdminData();
-                }
-                
-            } 
-            // SUPERVISOR LOGIC
-            else if (currentUser.role === 'supervisor') {
+                    if (newVotes) { adminGlobalData.votes = newVotes; processAdminData(); }
+                } else { await loadAdminData(); }
+            } else if (currentUser.role === 'supervisor') {
                 if (table === 'committees' && payload.new && payload.new.id == currentUser.committeeId) {
                      const currentLocked = document.getElementById('invalidVotes') && document.getElementById('invalidVotes').disabled;
                      if(currentLocked !== payload.new.is_finalized) renderSupervisorDashboard();
@@ -421,33 +409,21 @@
             }
         }
 
-        function refreshAdminView() {
-            // Update UI based on current active page without full re-render
-            if (currentPageContext === 'dashboard') {
-                processAdminData(); 
-            } else if (currentPageContext === 'committees_list') {
-                filterSharedGrid('page');
-            } else if (currentPageContext === 'violations') {
-                renderAdminViolationsPage();
-            } else if (currentPageContext === 'sorting') {
-                renderAdminSortingPage();
-            }
-        }
-
         // ============================================
-        // 3. Shared Components
+        // 2. Shared HTML Components
         // ============================================
         function getSidebarHTML(title = 'لوحة المعلومات') {
             const isAdmin = currentUser.role === 'admin';
             return `
-                <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden glass-effect transition-opacity"></div>
-                <aside id="mainSidebar" class="w-64 bg-secondary-900 text-white flex flex-col shadow-2xl z-40 fixed inset-y-0 right-0 transform translate-x-full lg:translate-x-0 lg:relative transition-transform duration-300 ease-in-out">
+                <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 hidden lg:hidden glass-effect transition-opacity"></div>
+                <aside id="mainSidebar" class="w-64 bg-secondary-900 text-white flex flex-col shadow-2xl fixed inset-y-0 right-0 transform translate-x-full lg:translate-x-0 lg:relative transition-transform duration-300 ease-in-out">
                     <div class="h-16 flex items-center px-6 border-b border-gray-700/50 bg-secondary-900/50 justify-between lg:justify-start">
                         <div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-primary-500 flex items-center justify-center ml-3 shadow-lg"><i class="fas fa-check text-white text-sm"></i></div><div><h1 class="font-bold text-lg">نظام الرصد</h1><p class="text-[10px] text-gray-400">الإدارة المركزية</p></div></div>
                         <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
                     </div>
                     <div class="px-6 py-6 border-b border-gray-700/30"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary-500 to-primary-700 flex items-center justify-center text-sm font-bold shadow-lg">${currentUser.name.charAt(0)}</div><div><p class="font-medium text-sm text-gray-100">${currentUser.name}</p><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-primary-900/50 text-primary-200 border border-primary-700/50">${currentUser.role}</span></div></div></div>
-                    <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+                    <!-- Added pb-20 to allow scrolling past fixed footer on mobile menu -->
+                    <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto pb-24">
                         <a href="#" onclick="${isAdmin ? 'renderAdminDashboard(); toggleSidebar()' : 'location.reload()'}" class="flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800 text-white transition-colors"><i class="fas fa-chart-pie w-6 text-lg ml-2"></i> لوحة المعلومات</a>
                         ${isAdmin ? `<a href="#" onclick="renderCommitteesPage(); toggleSidebar()" class="flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800 text-white transition-colors"><i class="fas fa-th-large w-6 text-lg ml-2 text-blue-400"></i> سجل اللجان</a>
                         <a href="#" onclick="renderAdminViolationsPage(); toggleSidebar()" class="flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-gray-800 text-white transition-colors"><i class="fas fa-exclamation-triangle w-6 text-lg ml-2 text-red-400"></i> مخالفات التصويت</a>
@@ -473,18 +449,11 @@
         function toggleSidebar() { const s = document.getElementById('mainSidebar'); const o = document.getElementById('sidebarOverlay'); if(s.classList.contains('translate-x-full')) { s.classList.remove('translate-x-full'); o.classList.remove('hidden'); } else { s.classList.add('translate-x-full'); o.classList.add('hidden'); } }
 
         // ============================================
-        // 4. Notifications & Chat Logic
+        // 3. Notifications & Chat Logic
         // ============================================
-        
-        async function sendNotification(message, type) {
-            try { await supabase.from('notifications').insert({ message: message, type: type }); } 
-            catch (err) { console.error("Notification Error:", err); }
-        }
+        async function sendNotification(message, type) { try { await supabase.from('notifications').insert({ message: message, type: type }); } catch (err) { console.error("Notification Error:", err); } }
 
-        function toggleNotifications() {
-            const d = document.getElementById('notifDropdown');
-            if(d.classList.contains('hidden')) { d.classList.remove('hidden'); markNotifsRead(); } else { d.classList.add('hidden'); }
-        }
+        function toggleNotifications() { const d = document.getElementById('notifDropdown'); if(d.classList.contains('hidden')) { d.classList.remove('hidden'); markNotifsRead(); } else { d.classList.add('hidden'); } }
 
         async function initNotificationSystem() {
             const { data: notifs } = await supabase.from('notifications').select('*').order('created_at', {ascending:false}).limit(20);
@@ -518,13 +487,8 @@
             return `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition flex gap-3 ${!n.is_read ? 'bg-blue-50/50' : ''}"><div class="mt-1"><i class="fas ${icon}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.message}</p><span class="text-[10px] text-gray-400 font-mono">${new Date(n.created_at).toLocaleTimeString('ar-EG')}</span></div></div>`;
         }
 
-        async function markNotifsRead() {
-            document.getElementById('notifBadge').classList.add('hidden');
-            document.getElementById('notifCount').innerText = '0';
-            await supabase.from('notifications').update({ is_read: true }).eq('is_read', false);
-        }
+        async function markNotifsRead() { document.getElementById('notifBadge').classList.add('hidden'); document.getElementById('notifCount').innerText = '0'; await supabase.from('notifications').update({ is_read: true }).eq('is_read', false); }
 
-        // --- NEW CHAT UI LOGIC ---
         const chatSidebar = document.getElementById("chatSidebar");
         const chatOverlay = document.getElementById("chatOverlay");
         const chatTrigger = document.getElementById("chatTrigger");
@@ -532,16 +496,7 @@
         const chatInput = document.getElementById("chatInput");
         const chatMessages = document.getElementById("chatMessages");
 
-        if(chatTrigger) {
-            chatTrigger.onclick = () => {
-                chatSidebar.classList.add("open");
-                chatOverlay.classList.add("open");
-                document.getElementById('chatBadge').classList.add('hidden');
-                scrollChat();
-                setTimeout(() => chatInput.focus(), 300);
-            };
-        }
-
+        if(chatTrigger) { chatTrigger.onclick = () => { chatSidebar.classList.add("open"); chatOverlay.classList.add("open"); document.getElementById('chatBadge').classList.add('hidden'); scrollChat(); setTimeout(() => chatInput.focus(), 300); }; }
         const closeChats = () => { chatSidebar.classList.remove("open"); chatOverlay.classList.remove("open"); };
         if(closeChat) closeChat.onclick = closeChats;
         if(chatOverlay) chatOverlay.onclick = closeChats;
@@ -554,13 +509,10 @@
             scrollChat();
 
             supabase.channel('public_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                appendMessage(payload.new); 
-                scrollChat();
+                appendMessage(payload.new); scrollChat();
                 if(payload.new.sender !== currentUser.name) {
                     msgSound.play().catch(()=>{});
-                    if(!chatSidebar.classList.contains('open')) {
-                        document.getElementById('chatBadge').classList.remove('hidden');
-                    }
+                    if(!chatSidebar.classList.contains('open')) document.getElementById('chatBadge').classList.remove('hidden');
                 }
             }).subscribe();
         }
@@ -568,50 +520,19 @@
         function appendMessage(msg) {
             const isMe = msg.sender === currentUser.name;
             const isAdmin = msg.sender === 'ADMIN' || msg.sender.includes('Admin');
-            let avatarTxt = '👤';
-            if (isAdmin) avatarTxt = 'A';
-            else {
-                const numMatch = msg.sender.match(/\d+/);
-                if(numMatch) avatarTxt = numMatch[0];
-                else avatarTxt = msg.sender.charAt(0);
-            }
+            let avatarTxt = isAdmin ? 'A' : (msg.sender.match(/\d+/) ? msg.sender.match(/\d+/)[0] : msg.sender.charAt(0));
             const wrapperClass = isMe ? 'me' : (isAdmin ? 'admin' : '');
             let content = `<div class="msg-bubble">${msg.message || ''}</div>`;
-            if(msg.type === 'image' && msg.media_url) {
-                content = `<div class="msg-bubble"><img src="${msg.media_url}" class="max-w-full rounded-lg cursor-pointer mb-1" onclick="showImage('${msg.media_url}')"><p>${msg.message || ''}</p></div>`;
-            }
+            if(msg.type === 'image' && msg.media_url) content = `<div class="msg-bubble"><img src="${msg.media_url}" class="max-w-full rounded-lg cursor-pointer mb-1" onclick="showImage('${msg.media_url}')"><p>${msg.message || ''}</p></div>`;
             const time = new Date(msg.created_at).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-            const html = `
-                <div class="msg-wrapper ${wrapperClass}">
-                    <div class="msg-avatar" title="${msg.sender}">${avatarTxt}</div>
-                    <div style="width: 100%">
-                        ${!isMe ? `<div class="text-[10px] text-gray-500 mb-1 px-2">${msg.sender}</div>` : ''}
-                        ${content}
-                        <div class="msg-time">${time}</div>
-                    </div>
-                </div>`;
-            chatMessages.insertAdjacentHTML('beforeend', html);
+            chatMessages.insertAdjacentHTML('beforeend', `<div class="msg-wrapper ${wrapperClass}"><div class="msg-avatar" title="${msg.sender}">${avatarTxt}</div><div style="width: 100%">${!isMe ? `<div class="text-[10px] text-gray-500 mb-1 px-2">${msg.sender}</div>` : ''}${content}<div class="msg-time">${time}</div></div></div>`);
         }
 
         function scrollChat() { chatMessages.scrollTop = chatMessages.scrollHeight; }
-
-        function handleChatFile(input) {
-            if(input.files[0]) {
-                chatFile = input.files[0];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('chatPrevImg').src = e.target.result;
-                    document.getElementById('chatPreviewArea').style.display = 'block';
-                };
-                reader.readAsDataURL(chatFile);
-            }
-        }
-
+        function handleChatFile(input) { if(input.files[0]) { chatFile = input.files[0]; const reader = new FileReader(); reader.onload = (e) => { document.getElementById('chatPrevImg').src = e.target.result; document.getElementById('chatPreviewArea').style.display = 'block'; }; reader.readAsDataURL(chatFile); } }
         function clearChatFile() { chatFile = null; document.getElementById('chatFileInput').value = ''; document.getElementById('chatPreviewArea').style.display = 'none'; }
-
         async function sendChatMessage() {
-            const text = chatInput.value.trim();
-            if(!text && !chatFile) return;
+            const text = chatInput.value.trim(); if(!text && !chatFile) return;
             chatInput.value = ''; const fileToSend = chatFile; clearChatFile();
             let mediaUrl = null; let type = 'text';
             try {
@@ -624,16 +545,25 @@
                 await supabase.from('messages').insert({ sender: currentUser.name, message: text, type: type, media_url: mediaUrl });
             } catch(err) { console.error("Chat Error", err); }
         }
-
         if(chatInput) chatInput.addEventListener("keypress", function(e) { if (e.key === "Enter") sendChatMessage(); });
 
         // ============================================
-        // 5. Admin Dashboard
+        // 4. Admin Dashboard
         // ============================================
         async function renderAdminDashboard() {
             currentPageContext = 'dashboard';
             const app = document.getElementById('app');
-            app.innerHTML = `${getSidebarHTML('لوحة المدير')}<div class="flex-1 flex flex-col h-full overflow-hidden bg-background">${getHeaderHTML('لوحة القيادة المركزية للحملة', `أهلاً بك، ${currentUser.name}`)}<main class="flex-1 overflow-y-auto p-6 space-y-8 fade-in"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-blue-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-users text-8xl text-blue-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الناخبون المسجلون</p><h3 class="text-3xl font-bold text-gray-800" id="totalRegistered">0</h3></div><div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 100%"></div></div></div><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-green-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-vote-yea text-8xl text-green-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">أصوات صحيحة</p><h3 class="text-3xl font-bold text-gray-800" id="totalValid">0</h3></div><div class="flex items-center gap-2 mt-2"><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full" id="participationRate">0%</span><span class="text-xs text-gray-400">نسبة المشاركة</span></div></div><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-red-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-ban text-8xl text-red-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الأصوات الباطلة</p><h3 class="text-3xl font-bold text-gray-800" id="totalInvalid">0</h3></div><div class="w-full bg-gray-100 rounded-full h-1.5"><div id="invalidBar" class="bg-red-500 h-1.5 rounded-full" style="width: 0%"></div></div></div><div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border-r-4 border-accent-500 relative overflow-hidden"><div class="flex justify-between items-center mb-3"><p class="text-gray-500 text-sm font-medium">توزيع الأحياء</p><i class="fas fa-map-marked-alt text-accent-500"></i></div><div class="space-y-4"><div><div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي غرب (1-34)</span><span class="font-mono text-brand-600" id="westVotes">0</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div id="westBar" class="bg-brand-500 h-2 rounded-full" style="width: 0%"></div></div><div class="text-[10px] text-right mt-0.5 text-gray-400" id="westRate">مشاركة: 0%</div></div><div><div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي شرق (35-59)</span><span class="font-mono text-purple-600" id="eastVotes">0</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div id="eastBar" class="bg-purple-500 h-2 rounded-full" style="width: 0%"></div></div><div class="text-[10px] text-right mt-0.5 text-gray-400" id="eastRate">مشاركة: 0%</div></div></div></div></div><div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-1 bg-gradient-to-br from-vip-600 to-vip-500 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="absolute -right-6 -top-6 bg-white/20 w-32 h-32 rounded-full blur-2xl"></div><div class="relative z-10"><div class="flex items-center justify-between mb-4"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-star text-yellow-300 text-xl"></i></div><span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">متابعة خاصة</span></div><p class="text-vip-100 text-sm mb-1">إجمالي أصوات ${APP_CONFIG.candidates[4]}</p><h3 class="text-4xl font-bold font-mono tracking-wider mb-2" id="cand4Total">0</h3><p class="text-xs text-vip-100 opacity-80" id="cand4Name">جاري التحميل...</p><div class="mt-4 pt-4 border-t border-white/20 flex justify-between items-center"><span class="text-xs">النسبة من الإجمالي</span><span class="font-bold text-lg" id="cand4Percent">0%</span></div></div></div><div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2"><i class="fas fa-chart-bar text-primary-600"></i> تفاصيل أصوات المرشحين</h3><div id="candidatesColumnChart" class="w-full h-64"></div></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">نسب التوزيع (Donut)</h3><div id="candidatesChart" class="flex justify-center"></div></div><div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">مقارنة الأحياء</h3><div id="districtsChart"></div></div></div><div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-6 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4"><h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-table text-brand-600"></i> سجل اللجان (عرض الجدول)</h3><div class="flex flex-wrap items-center gap-2 w-full md:w-auto"><div class="relative w-full md:w-48"><i class="fas fa-search absolute right-3 top-3 text-gray-400"></i><input type="text" id="dashSearch" onkeyup="filterDashboardTable()" placeholder="بحث برقم اللجنة..." class="w-full pr-9 pl-4 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></div><select id="dashDistrict" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الأحياء</option><option value="west">حي غرب</option><option value="east">حي شرق</option></select><select id="dashStatus" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الحالات</option><option value="finalized">مثبتة نهائياً</option><option value="active">جارية (نشطة)</option><option value="pending">لم تبدأ</option></select><button onclick="exportAdminTableToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> تصدير Excel</button></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-right text-gray-500" id="committeesTable"><thead class="text-xs text-gray-700 uppercase bg-gray-100 whitespace-nowrap"><tr><th class="px-4 py-3">#</th><th class="px-4 py-3">اسم اللجنة</th><th class="px-4 py-3">المقيدين</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[1]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[2]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[3]}</th><th class="px-4 py-3 bg-blue-50 text-brand-700">${APP_CONFIG.candidates[4]}</th><th class="px-4 py-3">أصوات صحيحة</th><th class="px-4 py-3">باطلة</th><th class="px-4 py-3">الحالة</th><th class="px-4 py-3">الحي</th><th class="px-4 py-3">الإجراءات</th></tr></thead><tbody id="dashboardTableBody"></tbody></table></div></div></main></div><div id="detailsModal" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"><div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800 text-lg">التفاصيل</h3><button onclick="document.getElementById('detailsModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div id="modalContent" class="p-6 space-y-4"></div></div></div>`;
+            // MODIFIED: 'flex flex-col w-full bg-background lg:h-full lg:overflow-hidden' 
+            // This ensures content goes to the left of sidebar on desktop
+            app.innerHTML = `
+                ${getSidebarHTML('لوحة المدير')}
+                <div class="flex-1 flex flex-col w-full bg-background lg:h-full lg:overflow-hidden">
+                    ${getHeaderHTML('لوحة القيادة المركزية للحملة', `أهلاً بك، ${currentUser.name}`)}
+                    <main class="flex-1 p-6 space-y-8 fade-in lg:overflow-y-auto pb-32">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-blue-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-users text-8xl text-blue-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الناخبون المسجلون</p><h3 class="text-3xl font-bold text-gray-800" id="totalRegistered">0</h3></div><div class="w-full bg-gray-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full" style="width: 100%"></div></div></div><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-green-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-vote-yea text-8xl text-green-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">أصوات صحيحة</p><h3 class="text-3xl font-bold text-gray-800" id="totalValid">0</h3></div><div class="flex items-center gap-2 mt-2"><span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full" id="participationRate">0%</span><span class="text-xs text-gray-400">نسبة المشاركة</span></div></div><div class="kpi-card bg-white rounded-2xl p-6 shadow-sm border-r-4 border-red-500 relative overflow-hidden group"><div class="absolute top-0 left-0 p-4 opacity-5"><i class="fas fa-ban text-8xl text-red-600"></i></div><div class="mb-4"><p class="text-gray-500 text-sm font-medium mb-1">الأصوات الباطلة</p><h3 class="text-3xl font-bold text-gray-800" id="totalInvalid">0</h3></div><div class="w-full bg-gray-100 rounded-full h-1.5"><div id="invalidBar" class="bg-red-500 h-1.5 rounded-full" style="width: 0%"></div></div></div><div class="kpi-card bg-white rounded-2xl p-5 shadow-sm border-r-4 border-accent-500 relative overflow-hidden"><div class="flex justify-between items-center mb-3"><p class="text-gray-500 text-sm font-medium">توزيع الأحياء</p><i class="fas fa-map-marked-alt text-accent-500"></i></div><div class="space-y-4"><div><div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي غرب (1-34)</span><span class="font-mono text-brand-600" id="westVotes">0</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div id="westBar" class="bg-brand-500 h-2 rounded-full" style="width: 0%"></div></div><div class="text-[10px] text-right mt-0.5 text-gray-400" id="westRate">مشاركة: 0%</div></div><div><div class="flex justify-between text-xs mb-1"><span class="font-bold text-gray-700">حي شرق (35-59)</span><span class="font-mono text-purple-600" id="eastVotes">0</span></div><div class="w-full bg-gray-100 rounded-full h-2"><div id="eastBar" class="bg-purple-500 h-2 rounded-full" style="width: 0%"></div></div><div class="text-[10px] text-right mt-0.5 text-gray-400" id="eastRate">مشاركة: 0%</div></div></div></div></div><div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-1 bg-gradient-to-br from-vip-600 to-vip-500 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden transform hover:-translate-y-1 transition duration-300"><div class="absolute -right-6 -top-6 bg-white/20 w-32 h-32 rounded-full blur-2xl"></div><div class="relative z-10"><div class="flex items-center justify-between mb-4"><div class="bg-white/20 p-2 rounded-lg"><i class="fas fa-star text-yellow-300 text-xl"></i></div><span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">متابعة خاصة</span></div><p class="text-vip-100 text-sm mb-1">إجمالي أصوات ${APP_CONFIG.candidates[4]}</p><h3 class="text-4xl font-bold font-mono tracking-wider mb-2" id="cand4Total">0</h3><p class="text-xs text-vip-100 opacity-80" id="cand4Name">جاري التحميل...</p><div class="mt-4 pt-4 border-t border-white/20 flex justify-between items-center"><span class="text-xs">النسبة من الإجمالي</span><span class="font-bold text-lg" id="cand4Percent">0%</span></div></div></div><div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2"><i class="fas fa-chart-bar text-primary-600"></i> تفاصيل أصوات المرشحين</h3><div id="candidatesColumnChart" class="w-full h-64"></div></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">نسب التوزيع (Donut)</h3><div id="candidatesChart" class="flex justify-center"></div></div><div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">مقارنة الأحياء</h3><div id="districtsChart"></div></div></div><div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-6 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-4"><h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-table text-brand-600"></i> سجل اللجان (عرض الجدول)</h3><div class="flex flex-wrap items-center gap-2 w-full md:w-auto"><div class="relative w-full md:w-48"><i class="fas fa-search absolute right-3 top-3 text-gray-400"></i><input type="text" id="dashSearch" onkeyup="filterDashboardTable()" placeholder="بحث برقم اللجنة..." class="w-full pr-9 pl-4 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"></div><select id="dashDistrict" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الأحياء</option><option value="west">حي غرب</option><option value="east">حي شرق</option></select><select id="dashStatus" onchange="filterDashboardTable()" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2 focus:ring-brand-500"><option value="all">كل الحالات</option><option value="finalized">مثبتة نهائياً</option><option value="active">جارية (نشطة)</option><option value="pending">لم تبدأ</option></select><button onclick="exportAdminTableToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition flex items-center gap-2"><i class="fas fa-file-excel"></i> تصدير Excel</button></div></div><div class="overflow-x-auto"><table class="w-full text-sm text-right text-gray-500" id="committeesTable"><thead class="text-xs text-gray-700 uppercase bg-gray-100 whitespace-nowrap"><tr><th class="px-4 py-3">#</th><th class="px-4 py-3">اسم اللجنة</th><th class="px-4 py-3">المقيدين</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[1]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[2]}</th><th class="px-4 py-3 bg-gray-50 text-gray-700">${APP_CONFIG.candidates[3]}</th><th class="px-4 py-3 bg-blue-50 text-brand-700">${APP_CONFIG.candidates[4]}</th><th class="px-4 py-3">أصوات صحيحة</th><th class="px-4 py-3">باطلة</th><th class="px-4 py-3">الحالة</th><th class="px-4 py-3">الحي</th><th class="px-4 py-3">الإجراءات</th></tr></thead><tbody id="dashboardTableBody"></tbody></table></div></div>
+                    </main>
+                </div>
+                <div id="detailsModal" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"><div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800 text-lg">التفاصيل</h3><button onclick="document.getElementById('detailsModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div><div id="modalContent" class="p-6 space-y-4"></div></div></div>`;
             await loadAdminData();
         }
 
@@ -677,12 +607,10 @@
                 
                 committeeVotes.forEach(v => { if (stats.candidateVotes[v.candidate_id]) stats.candidateVotes[v.candidate_id].count += (v.count || 0); });
             });
-            
             updateAdminUI(stats);
         }
 
         function updateAdminUI(stats) {
-            // Update Dashboard Counters
             if(document.getElementById('totalRegistered')) document.getElementById('totalRegistered').innerText = stats.totalRegistered.toLocaleString();
             if(document.getElementById('totalValid')) document.getElementById('totalValid').innerText = stats.totalValid.toLocaleString();
             if(document.getElementById('totalInvalid')) document.getElementById('totalInvalid').innerText = stats.totalInvalid.toLocaleString();
@@ -706,10 +634,7 @@
                 const totalRaw = stats.totalValid * 2;
                 if(document.getElementById('cand4Percent')) document.getElementById('cand4Percent').innerText = `${totalRaw > 0 ? ((cand4Data.count / totalRaw) * 100).toFixed(1) : 0}%`;
             }
-
-            renderAdminCharts(stats); 
-            filterDashboardTable(); 
-            if(document.getElementById('pageGrid')) filterSharedGrid('page');
+            renderAdminCharts(stats); filterDashboardTable(); if(document.getElementById('pageGrid')) filterSharedGrid('page');
         }
 
         function renderAdminCharts(stats) {
@@ -758,30 +683,18 @@
         }
 
         function exportAdminTableToExcel() {
-            const data = adminGlobalData.committees.map(c => ({
-                'رقم اللجنة': c.id, 'اسم اللجنة': c.name, 'مسجلين': c.total_registered_voters,
-                'فودة (1)': c.cand1Votes, 'الشرقاوي (2)': c.cand2Votes, 'وردة (3)': c.cand3Votes, 'د. رضا (4)': c.cand4Votes,
-                'صحيح': c.calculatedValid, 'باطل': c.invalid_votes, 'الحالة': c.is_finalized ? 'مثبتة' : 'جارية'
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Committees");
-            XLSX.writeFile(wb, "Election_Report.xlsx");
+            const data = adminGlobalData.committees.map(c => ({ 'رقم اللجنة': c.id, 'اسم اللجنة': c.name, 'مسجلين': c.total_registered_voters, 'فودة (1)': c.cand1Votes, 'الشرقاوي (2)': c.cand2Votes, 'وردة (3)': c.cand3Votes, 'د. رضا (4)': c.cand4Votes, 'صحيح': c.calculatedValid, 'باطل': c.invalid_votes, 'الحالة': c.is_finalized ? 'مثبتة' : 'جارية' }));
+            const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Committees"); XLSX.writeFile(wb, "Election_Report.xlsx");
         }
 
-        // ============================================
-        // 5.2 Standalone Pages & Shared Grid
-        // ============================================
         async function renderCommitteesPage() {
             currentPageContext = 'committees_list';
             const app = document.getElementById('app');
-            
-            // 1. Set the HTML skeleton first so #pageGrid exists
             app.innerHTML = `
                 ${getSidebarHTML('سجل اللجان')}
-                <div class="flex-1 flex flex-col h-full overflow-hidden bg-background">
+                <div class="flex-1 flex flex-col w-full bg-background lg:h-full lg:overflow-hidden">
                     ${getHeaderHTML('سجل اللجان الشامل', 'عرض وتصفية جميع اللجان الانتخابية')}
-                    <main class="flex-1 overflow-y-auto p-6 fade-in"><div class="space-y-6">
+                    <main class="flex-1 p-6 space-y-6 fade-in lg:overflow-y-auto pb-32">
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-20">
                             <div class="flex items-center gap-3"><span class="font-bold text-gray-700">تصفية:</span><span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full" id="pageCommitteesCount">0</span></div>
                             <div class="flex flex-wrap items-center gap-2 w-full md:w-auto"><input type="text" id="pageSearch" onkeyup="filterSharedGrid('page')" placeholder="بحث..." class="w-full md:w-64 pr-4 pl-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"><select id="pageDistrict" onchange="filterSharedGrid('page')" class="bg-gray-50 border border-gray-200 text-sm rounded-lg p-2"><option value="all">الأحياء</option><option value="west">غرب</option><option value="east">شرق</option></select><select id="pageStatus" onchange="filterSharedGrid('page')" class="bg-gray-50 border border-gray-200 text-sm rounded-lg p-2"><option value="all">الحالات</option><option value="finalized">مثبتة</option><option value="active">جارية</option></select></div>
@@ -791,61 +704,50 @@
                         </div>
                     </div></main>
                 </div>
-                <!-- Reuse Details Modal for this page too -->
                 <div id="detailsModal" class="hidden fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
                         <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800 text-lg">التفاصيل</h3><button onclick="document.getElementById('detailsModal').classList.add('hidden')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button></div>
                         <div id="modalContent" class="p-6 space-y-4"></div>
                     </div>
                 </div>`;
-            
-            // 2. Ensure Data is Loaded AND Processed
-            // We force processAdminData here to guarantee properties like cand1Votes are attached
-            if (!adminGlobalData.committees.length) {
-                await loadAdminData(); // This handles processing internally
-            } else {
-                processAdminData(); // Force re-process existing data to be safe
-            }
-
-            // 3. Render the grid immediately
+            if (!adminGlobalData.committees.length) { await loadAdminData(); } else { processAdminData(); }
             filterSharedGrid('page');
         }
 
         async function renderAdminViolationsPage() {
             currentPageContext = 'violations';
             const app = document.getElementById('app');
-            // Ensure committees data is loaded to get names
             if (!adminGlobalData.committees.length) await loadAdminData();
-
-            app.innerHTML = `${getSidebarHTML('بلاغات المخالفات')}<div class="flex-1 flex flex-col h-full overflow-hidden bg-background">${getHeaderHTML('سجل المخالفات الواردة', 'متابعة حية للبلاغات')}<main class="flex-1 overflow-y-auto p-6 fade-in"><div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="col-span-full flex justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div></div></div></main></div>`;
-            
+            app.innerHTML = `
+                ${getSidebarHTML('بلاغات المخالفات')}
+                <div class="flex-1 flex flex-col w-full bg-background lg:h-full lg:overflow-hidden">
+                    ${getHeaderHTML('سجل المخالفات الواردة', 'متابعة حية للبلاغات')}
+                    <main class="flex-1 p-6 fade-in lg:overflow-y-auto pb-32">
+                        <div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="col-span-full flex justify-center py-20"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div></div>
+                        </div>
+                    </main>
+                </div>`;
             const { data: reports, error } = await supabase.from('violation_reports').select('*').order('created_at', { ascending: false });
             const grid = document.getElementById('violationsGrid'); grid.innerHTML = '';
             if (error || !reports.length) { grid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-10"><p>لا توجد مخالفات</p></div>`; return; }
-
             reports.forEach(r => {
                 const date = new Date(r.created_at).toLocaleString('ar-EG');
-                // Find Committee Name
-                const comm = adminGlobalData.committees.find(c => c.id == r.committee_id);
-                const commName = comm ? ` - ${comm.name}` : '';
-
+                const comm = adminGlobalData.committees.find(c => c.id == r.committee_id); const commName = comm ? ` - ${comm.name}` : '';
                 let imagesHtml = r.images && r.images.length > 0 ? `<div class="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-thin">${r.images.map(url => `<img src="${url}" onclick="showImage('${url}')" class="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-zoom-in img-hover-zoom">`).join('')}</div>` : '';
                 grid.innerHTML += `<div class="bg-white rounded-xl shadow-card border border-gray-100 p-5 flex flex-col hover:shadow-lg transition-all"><div class="flex justify-between items-start mb-3"><div><span class="bg-red-50 text-red-600 text-xs font-bold px-2 py-1 rounded-lg border border-red-100">لجنة #${r.committee_id}${commName}</span><p class="text-xs text-gray-400 mt-1">${r.supervisor_name || 'مشرف'}</p></div><span class="text-[10px] text-gray-400 font-mono">${date}</span></div><div class="flex-1"><p class="text-gray-700 text-sm leading-relaxed font-medium bg-gray-50 p-3 rounded-lg border border-gray-100">${r.notes}</p></div>${imagesHtml}<div class="mt-4 pt-3 border-t border-gray-50 flex justify-between items-center"><span class="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full">قيد المراجعة</span><button class="text-gray-400 hover:text-brand-600"><i class="fas fa-ellipsis-h"></i></button></div></div>`;
             });
         }
 
-        // --- NEW: Admin Sorting Reports Page ---
         async function renderAdminSortingPage() {
             currentPageContext = 'sorting';
             const app = document.getElementById('app');
-            // Ensure committees data is loaded to get names
             if (!adminGlobalData.committees.length) await loadAdminData();
-
             app.innerHTML = `
                 ${getSidebarHTML('محاضر الفرز')}
-                <div class="flex-1 flex flex-col h-full overflow-hidden bg-background">
+                <div class="flex-1 flex flex-col w-full bg-background lg:h-full lg:overflow-hidden">
                     ${getHeaderHTML('سجل محاضر الفرز الرسمية', 'صور المحاضر المرفوعة من اللجان')}
-                    <main class="flex-1 overflow-y-auto p-6 fade-in">
+                    <main class="flex-1 p-6 fade-in lg:overflow-y-auto pb-32">
                         <div id="sortingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             <div class="col-span-full flex justify-center py-20">
                                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
@@ -857,59 +759,22 @@
             const { data: reports, error } = await supabase.from('sorting_reports').select('*').order('created_at', { ascending: false });
             const grid = document.getElementById('sortingGrid');
             grid.innerHTML = '';
-            if (error || !reports || reports.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-10"><i class="fas fa-folder-open text-4xl mb-4"></i><p>لا توجد محاضر مرفوعة حتى الآن</p></div>`;
-                return;
-            }
+            if (error || !reports || reports.length === 0) { grid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-10"><i class="fas fa-folder-open text-4xl mb-4"></i><p>لا توجد محاضر مرفوعة حتى الآن</p></div>`; return; }
             reports.forEach(r => {
                 const date = new Date(r.created_at).toLocaleString('ar-EG');
-                // Find Committee Name
-                const comm = adminGlobalData.committees.find(c => c.id == r.committee_id);
-                const commName = comm ? ` - ${comm.name}` : '';
-
-                grid.innerHTML += `
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
-                        <div class="h-48 overflow-hidden relative bg-gray-100 cursor-pointer" onclick="showImage('${r.image_url}')">
-                            <img src="${r.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <i class="fas fa-search-plus text-white text-3xl"></i>
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded border border-blue-100">
-                                    لجنة #${r.committee_id}${commName}
-                                </span>
-                                <span class="text-[10px] text-gray-400">${date}</span>
-                            </div>
-                            <p class="text-xs text-gray-500 flex items-center gap-1">
-                                <i class="fas fa-user-shield"></i> ${r.supervisor_name || 'مشرف'}
-                            </p>
-                            <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center">
-                                <a href="${r.image_url}" download target="_blank" class="text-xs text-brand-600 hover:underline font-medium">
-                                    <i class="fas fa-download"></i> تحميل الصورة
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                const comm = adminGlobalData.committees.find(c => c.id == r.committee_id); const commName = comm ? ` - ${comm.name}` : '';
+                grid.innerHTML += `<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all group"><div class="h-48 overflow-hidden relative bg-gray-100 cursor-pointer" onclick="showImage('${r.image_url}')"><img src="${r.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"><div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><i class="fas fa-search-plus text-white text-3xl"></i></div></div><div class="p-4"><div class="flex justify-between items-start mb-2"><span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded border border-blue-100">لجنة #${r.committee_id}${commName}</span><span class="text-[10px] text-gray-400">${date}</span></div><p class="text-xs text-gray-500 flex items-center gap-1"><i class="fas fa-user-shield"></i> ${r.supervisor_name || 'مشرف'}</p><div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center"><a href="${r.image_url}" download target="_blank" class="text-xs text-brand-600 hover:underline font-medium"><i class="fas fa-download"></i> تحميل الصورة</a></div></div></div>`;
             });
         }
 
-        // --- Image Modal Logic ---
         window.showImage = function(url) { document.getElementById('expandedImg').src = url; document.getElementById('imageModal').classList.remove('hidden'); setTimeout(() => document.getElementById('expandedImg').classList.remove('scale-95'), 10); }
         window.closeImageModal = function() { document.getElementById('expandedImg').classList.add('scale-95'); setTimeout(() => document.getElementById('imageModal').classList.add('hidden'), 200); }
 
         function filterSharedGrid(context = 'dashboard') {
-            const isPage = context === 'page';
-            // Only execute if we are on the pageGrid (Committees List Page)
-            const gridContainer = document.getElementById('pageGrid'); 
-            if (!gridContainer) return;
-
+            const gridContainer = document.getElementById('pageGrid'); if (!gridContainer) return;
             const searchQuery = document.getElementById('pageSearch') ? document.getElementById('pageSearch').value.trim() : '';
             const distFilter = document.getElementById('pageDistrict') ? document.getElementById('pageDistrict').value : 'all';
             const statusFilter = document.getElementById('pageStatus') ? document.getElementById('pageStatus').value : 'all';
-            
             gridContainer.innerHTML = '';
             
             const filtered = adminGlobalData.committees.filter(c => {
@@ -918,69 +783,50 @@
                 const status = c.is_finalized ? 'finalized' : (hasActivity ? 'active' : 'pending');
                 return (distFilter === 'all' || distFilter === district) && (statusFilter === 'all' || statusFilter === status) && (c.id.toString().includes(searchQuery) || c.name.includes(searchQuery));
             });
-
             const countEl = document.getElementById('pageCommitteesCount'); if(countEl) countEl.innerText = filtered.length;
             if (filtered.length === 0) { gridContainer.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">لا توجد نتائج</div>`; return; }
-
             filtered.forEach(c => {
                 const districtName = parseInt(c.id) <= 34 ? 'حي غرب' : 'حي شرق';
                 let statusConfig = { class: 'bg-gray-100 text-gray-500 border-gray-200', icon: 'fa-clock', text: 'لم تبدأ' };
                 if (c.is_finalized) statusConfig = { class: 'bg-purple-50 text-purple-700 border-purple-100', icon: 'fa-check-double', text: 'مثبتة' };
                 else if (c.has_started || c.calculatedValid > 0 || c.invalid_votes > 0) statusConfig = { class: 'bg-green-50 text-green-700 border-green-100', icon: 'fa-play-circle', text: 'جارية' };
                 const turnout = c.total_registered_voters > 0 ? Math.round(((c.calculatedValid + (c.invalid_votes || 0)) / c.total_registered_voters) * 100) : 0;
-
-                // --- GENERATE CANDIDATE ROWS FOR THE CARD ---
                 let candidatesHtml = '';
                 [1, 2, 3, 4].forEach(candId => {
-                   const candName = APP_CONFIG.candidates[candId];
-                   const candVotes = c[`cand${candId}Votes`] || 0;
-                   const highlightClass = candId === 4 ? 'bg-blue-50 font-bold text-blue-700 rounded' : 'text-gray-600';
-                   candidatesHtml += `
-                        <div class="flex justify-between items-center px-2 py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${candId === 4 ? 'bg-blue-50/50' : ''}">
-                            <div class="flex items-center gap-2">
-                                <span class="w-5 h-5 flex items-center justify-center rounded-full text-[10px] bg-gray-100 text-gray-500 font-bold">${candId}</span>
-                                <span class="text-xs ${highlightClass}">${candName}</span>
-                            </div>
-                            <span class="text-sm font-mono ${highlightClass}">${candVotes}</span>
-                        </div>
-                   `;
+                   const candName = APP_CONFIG.candidates[candId]; const candVotes = c[`cand${candId}Votes`] || 0; const highlightClass = candId === 4 ? 'bg-blue-50 font-bold text-blue-700 rounded' : 'text-gray-600';
+                   candidatesHtml += `<div class="flex justify-between items-center px-2 py-1.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${candId === 4 ? 'bg-blue-50/50' : ''}"><div class="flex items-center gap-2"><span class="w-5 h-5 flex items-center justify-center rounded-full text-[10px] bg-gray-100 text-gray-500 font-bold">${candId}</span><span class="text-xs ${highlightClass}">${candName}</span></div><span class="text-sm font-mono ${highlightClass}">${candVotes}</span></div>`;
                 });
-
-                gridContainer.innerHTML += `
-                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group fade-in">
-                        <div class="p-3 border-b border-gray-50 flex justify-between items-start bg-gradient-to-r from-gray-50 to-white">
-                            <div><div class="flex items-center gap-2 mb-1"><span class="bg-white border border-gray-200 text-gray-700 text-xs font-bold px-2 py-0.5 rounded shadow-sm">#${c.id}</span><span class="text-[10px] text-gray-400 flex items-center gap-1"><i class="fas fa-map-marker-alt"></i> ${districtName}</span></div><h4 class="font-bold text-gray-800 text-sm line-clamp-1" title="${c.name}">${c.name}</h4></div>
-                            <span class="${statusConfig.class} border text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1"><i class="fas ${statusConfig.icon}"></i> ${statusConfig.text}</span>
-                        </div>
-                        
-                        <!-- General Stats Grid -->
-                        <div class="grid grid-cols-3 divide-x divide-x-reverse divide-gray-100 p-2 bg-gray-50/50 border-b border-gray-100">
-                            <div class="text-center px-1"><p class="text-[9px] text-gray-400 mb-0.5">مسجلين</p><p class="font-bold text-gray-700 text-xs">${(c.total_registered_voters || 0).toLocaleString()}</p></div>
-                            <div class="text-center px-1"><p class="text-[9px] text-green-600 mb-0.5">أصوات صحيحة</p><p class="font-bold text-green-700 text-xs">${(c.calculatedValid || 0).toLocaleString()}</p></div>
-                            <div class="text-center px-1"><p class="text-[9px] text-red-500 mb-0.5">باطلة</p><p class="font-bold text-red-600 text-xs">${(c.invalid_votes || 0).toLocaleString()}</p></div>
-                        </div>
-
-                        <!-- Candidate List Breakdown -->
-                        <div class="p-1 bg-white">
-                            <div class="text-[10px] text-gray-400 px-2 py-1 font-medium">نتائج المرشحين:</div>
-                            ${candidatesHtml}
-                        </div>
-
-                        <div class="px-3 py-2 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-                            <div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">نسبة التصويت</span><span class="text-xs font-bold text-brand-600">${turnout}%</span></div>
-                            <button onclick="openAdminModal(${c.id})" class="text-xs bg-white border border-gray-200 hover:border-brand-300 hover:text-brand-600 text-gray-600 px-2 py-1 rounded shadow-sm transition-colors font-medium">التفاصيل الكاملة</button>
-                        </div>
-                    </div>`;
+                gridContainer.innerHTML += `<div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group fade-in"><div class="p-3 border-b border-gray-50 flex justify-between items-start bg-gradient-to-r from-gray-50 to-white"><div><div class="flex items-center gap-2 mb-1"><span class="bg-white border border-gray-200 text-gray-700 text-xs font-bold px-2 py-0.5 rounded shadow-sm">#${c.id}</span><span class="text-[10px] text-gray-400 flex items-center gap-1"><i class="fas fa-map-marker-alt"></i> ${districtName}</span></div><h4 class="font-bold text-gray-800 text-sm line-clamp-1" title="${c.name}">${c.name}</h4></div><span class="${statusConfig.class} border text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1"><i class="fas ${statusConfig.icon}"></i> ${statusConfig.text}</span></div><div class="grid grid-cols-3 divide-x divide-x-reverse divide-gray-100 p-2 bg-gray-50/50 border-b border-gray-100"><div class="text-center px-1"><p class="text-[9px] text-gray-400 mb-0.5">مسجلين</p><p class="font-bold text-gray-700 text-xs">${(c.total_registered_voters || 0).toLocaleString()}</p></div><div class="text-center px-1"><p class="text-[9px] text-green-600 mb-0.5">أصوات صحيحة</p><p class="font-bold text-green-700 text-xs">${(c.calculatedValid || 0).toLocaleString()}</p></div><div class="text-center px-1"><p class="text-[9px] text-red-500 mb-0.5">باطلة</p><p class="font-bold text-red-600 text-xs">${(c.invalid_votes || 0).toLocaleString()}</p></div></div><div class="p-1 bg-white"><div class="text-[10px] text-gray-400 px-2 py-1 font-medium">نتائج المرشحين:</div>${candidatesHtml}</div><div class="px-3 py-2 bg-gray-50 border-t border-gray-100 flex justify-between items-center"><div class="flex items-center gap-2"><span class="text-[10px] text-gray-400">نسبة التصويت</span><span class="text-xs font-bold text-brand-600">${turnout}%</span></div><button onclick="openAdminModal(${c.id})" class="text-xs bg-white border border-gray-200 hover:border-brand-300 hover:text-brand-600 text-gray-600 px-2 py-1 rounded shadow-sm transition-colors font-medium">التفاصيل الكاملة</button></div></div>`;
             });
         }
 
         // ============================================
-        // 6. Login Logic (Existing)
+        // 5. Login Logic (Modified for Footer)
         // ============================================
         function renderLoginPage() {
             const app = document.getElementById('app');
-            app.className = "min-h-screen w-full bg-white flex";
-            app.innerHTML = `<div class="hidden lg:flex lg:w-1/2 bg-secondary-900 relative overflow-hidden items-center justify-center"><div class="absolute inset-0 bg-gradient-to-br from-primary-900/90 to-secondary-900/90"></div><div class="relative z-10 text-center px-12 max-w-lg"><div class="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-8 border border-white/20 shadow-2xl"><i class="fas fa-shield-alt text-4xl text-white"></i></div><h1 class="text-4xl font-bold text-white mb-6 leading-tight">نظام الرصد الانتخابي لدائرة المنصورة</h1><p class="text-blue-100 text-lg leading-relaxed">منصة مركزية لإدارة ومراقبة العملية الانتخابية لحملة معالي الوزير د. رضا عبد السلام.</p></div></div><div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50"><div class="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-gray-100"><div class="text-center mb-10"><h2 class="text-2xl font-bold text-gray-900">تسجيل الدخول</h2><p class="text-gray-500 mt-2 text-sm">أدخل بيانات الاعتماد للوصول للنظام</p></div><form id="loginForm" class="space-y-6"><div><label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label><input type="text" id="username" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none" required></div><div><label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label><input type="password" id="password" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none" required></div><div id="loginError" class="hidden text-red-600 text-sm text-center">خطأ في البيانات</div><button type="submit" id="loginBtn" class="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary-700 hover:bg-primary-800 transition-colors">دخول آمن</button></form></div></div>`;
+            // MODIFIED: Use flex-1 instead of min-h-screen to allow footer to stay at bottom without push
+            app.className = "flex-1 w-full bg-white flex overflow-hidden"; 
+            app.innerHTML = `
+                <div class="hidden lg:flex lg:w-1/2 h-full bg-secondary-900 relative overflow-hidden items-center justify-center">
+                    <div class="absolute inset-0 bg-gradient-to-br from-primary-900/90 to-secondary-900/90"></div>
+                    <div class="relative z-10 text-center px-12 max-w-lg">
+                        <div class="w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-8 border border-white/20 shadow-2xl"><i class="fas fa-shield-alt text-4xl text-white"></i></div>
+                        <h1 class="text-4xl font-bold text-white mb-6 leading-tight">نظام الرصد الانتخابي لدائرة المنصورة</h1>
+                        <p class="text-blue-100 text-lg leading-relaxed"> لحملة معالي الوزير ا.د. رضا عبد السلام </p>
+                    </div>
+                </div>
+                <div class="w-full lg:w-1/2 h-full flex items-center justify-center p-8 bg-gray-50 overflow-y-auto pb-32">
+                    <div class="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+                        <div class="text-center mb-10"><h2 class="text-2xl font-bold text-gray-900">تسجيل الدخول</h2><p class="text-gray-500 mt-2 text-sm">أدخل بيانات الاعتماد للوصول للنظام</p></div>
+                        <form id="loginForm" class="space-y-6">
+                            <div><label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label><input type="text" id="username" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none" required></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label><input type="password" id="password" class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none" required></div>
+                            <div id="loginError" class="hidden text-red-600 text-sm text-center">خطأ في البيانات</div>
+                            <button type="submit" id="loginBtn" class="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-primary-700 hover:bg-primary-800 transition-colors">دخول آمن</button>
+                        </form>
+                    </div>
+                </div>`;
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault(); const btn = document.getElementById('loginBtn'); btn.innerHTML = 'جاري التحقق...'; btn.disabled = true;
                 try {
@@ -988,27 +834,24 @@
                     if (error || !users.length) throw new Error('Invalid credentials');
                     currentUser = { id: users[0].id, name: users[0].name, role: users[0].role, committeeId: users[0].assigned_committee_id };
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    if (currentUser.role === 'admin') renderAdminDashboard(); else if (currentUser.role === 'observer') renderObserverDashboard(); else renderSupervisorDashboard();
                     
-                    // INIT NEW FEATURES
                     setupGlobalRealtime();
                     initChatSystem();
                     if(currentUser.role === 'admin') initNotificationSystem();
 
+                    if (currentUser.role === 'admin') renderAdminDashboard(); else if (currentUser.role === 'observer') renderObserverDashboard(); else renderSupervisorDashboard();
                 } catch (err) { document.getElementById('loginError').classList.remove('hidden'); btn.innerHTML = 'دخول آمن'; btn.disabled = false; }
             });
         }
 
         // ============================================
-        // 7. Supervisor & Observer Dashboards (Preserved & Updated)
+        // 6. Supervisor Logic
         // ============================================
         async function renderSupervisorDashboard() {
             currentPageContext = 'supervisor';
             const app = document.getElementById('app');
             const data = await loadSupervisorData();
             const isLocked = data.committee.is_finalized;
-            
-            // Initial Calc
             const rawMarks = data.candidates.reduce((sum, c) => sum + (c.current_votes || 0), 0);
             const validBallots = Math.floor(rawMarks / 2);
             const totalTurnout = validBallots + (data.committee.invalid_votes || 0);
@@ -1016,50 +859,20 @@
             const rate = ((totalTurnout / reg) * 100).toFixed(1);
 
             app.innerHTML = `${getSidebarHTML()}
-                <div class="flex-1 flex flex-col h-full overflow-hidden bg-background">
+                <div class="flex-1 flex flex-col w-full bg-background lg:h-full lg:overflow-hidden">
                     ${getHeaderHTML(data.committee.name, `لجنة رقم ${currentUser.committeeId} - ${data.committee.location}`)}
-                    <main class="flex-1 overflow-y-auto p-6 fade-in">
+                    <main class="flex-1 p-6 fade-in pb-32 lg:overflow-y-auto"> <!-- Added padding bottom for mobile footer clearance -->
                         <div class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-card mb-6 border-l-4 ${isLocked ? 'border-purple-500' : 'border-success'}"><div class="flex items-center gap-4 mb-4 sm:mb-0"><div class="p-3 rounded-full ${isLocked ? 'bg-purple-50 text-purple-600' : 'bg-green-50 text-green-600'}"><i class="fas ${isLocked ? 'fa-lock' : 'fa-check-circle'} text-xl"></i></div><div><p class="text-sm text-gray-500">حالة اللجنة</p><h3 class="text-lg font-bold ${isLocked ? 'text-purple-700' : 'text-green-700'}">${isLocked ? 'تم تثبيت النتائج' : 'عملية الرصد جارية'}</h3></div></div><button onclick="toggleLock(${isLocked ? 'false' : 'true'})" class="px-6 py-2.5 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 ${isLocked ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-primary-700 text-white'}">${isLocked ? '<i class="fas fa-unlock"></i> فك التثبيت' : '<i class="fas fa-save"></i> تثبيت نهائي'}</button></div>
-                        
-                        <!-- NEW: Sorting Report Upload Card -->
-                        <div class="bg-white p-4 rounded-xl shadow-card mb-6 border-r-4 border-blue-600 flex flex-col sm:flex-row justify-between items-center gap-4">
-                            <div class="flex items-center gap-4">
-                                <div class="p-3 rounded-full bg-blue-50 text-blue-600"><i class="fas fa-file-invoice text-xl"></i></div>
-                                <div><h3 class="text-lg font-bold text-gray-800">محضر الفرز الرسمي</h3><p class="text-sm text-gray-500">يرجى تصوير المحضر ورفعه هنا</p></div>
-                            </div>
-                            <button onclick="openSortingModal()" class="px-6 py-2.5 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"><i class="fas fa-camera"></i> رفع المحضر</button>
-                        </div>
-
+                        <div class="bg-white p-4 rounded-xl shadow-card mb-6 border-r-4 border-blue-600 flex flex-col sm:flex-row justify-between items-center gap-4"><div class="flex items-center gap-4"><div class="p-3 rounded-full bg-blue-50 text-blue-600"><i class="fas fa-file-invoice text-xl"></i></div><div><h3 class="text-lg font-bold text-gray-800">محضر الفرز الرسمي</h3><p class="text-sm text-gray-500">يرجى تصوير المحضر ورفعه هنا</p></div></div><button onclick="openSortingModal()" class="px-6 py-2.5 rounded-lg font-bold shadow-md transition-all flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"><i class="fas fa-camera"></i> رفع المحضر</button></div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div class="lg:col-span-2 space-y-6"><div class="bg-white rounded-xl shadow-card border border-gray-100 overflow-hidden"><div class="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between"><h3 class="font-bold text-gray-800">استمارة رصد الأصوات</h3><span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">الحفظ تلقائي</span></div><div class="p-6 space-y-4">
                             ${data.candidates.map(c => `
                             <div class="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors bg-white">
-                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center ml-4 text-gray-500 font-bold text-lg">${c.id}</div>
-                                <div class="flex-1"><h4 class="font-bold text-gray-800 text-lg">${c.name}</h4></div>
-                                <div class="flex items-center gap-2 relative">
-                                    <button onclick="decrementVote(${c.id})" class="w-10 h-10 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition" ${isLocked ? 'disabled' : ''}><i class="fas fa-minus"></i></button>
-                                    <input type="number" id="vote-input-${c.id}" min="0" data-candidate-id="${c.id}" class="w-28 p-3 text-center text-xl font-mono font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100 text-gray-500' : ''}" value="${c.current_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateVote('${c.id}', this)">
-                                    <div id="status-${c.id}" class="absolute -left-8 text-lg"></div>
-                                    <button onclick="incrementVote(${c.id})" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:shadow-lg transition-all duration-200 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" ${isLocked ? 'disabled' : ''}><i class="fas fa-plus"></i></button>
-                                </div>
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center ml-4 text-gray-500 font-bold text-lg">${c.id}</div><div class="flex-1"><h4 class="font-bold text-gray-800 text-lg">${c.name}</h4></div>
+                                <div class="flex items-center gap-2 relative"><button onclick="decrementVote(${c.id})" class="w-10 h-10 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition" ${isLocked ? 'disabled' : ''}><i class="fas fa-minus"></i></button><input type="number" id="vote-input-${c.id}" min="0" data-candidate-id="${c.id}" class="w-28 p-3 text-center text-xl font-mono font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100 text-gray-500' : ''}" value="${c.current_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateVote('${c.id}', this)"><div id="status-${c.id}" class="absolute -left-8 text-lg"></div><button onclick="incrementVote(${c.id})" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:shadow-lg transition-all duration-200 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" ${isLocked ? 'disabled' : ''}><i class="fas fa-plus"></i></button></div>
                             </div>`).join('')}
-                            
-                            <!-- INVALID VOTES SECTION WITH ADD BUTTON -->
-                            <div class="mt-6 pt-6 border-t border-dashed border-gray-300"><div class="flex items-center p-4 border border-red-200 bg-red-50/30 rounded-lg"><div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center ml-4 text-red-500"><i class="fas fa-ban text-xl"></i></div><div class="flex-1"><h4 class="font-bold text-gray-800">الأصوات الباطلة</h4></div><div class="flex items-center gap-2 relative">
-                                <button onclick="decrementInvalidVote()" class="w-10 h-10 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition" ${isLocked ? 'disabled' : ''}><i class="fas fa-minus"></i></button>
-                                <input type="number" id="invalidVotes" min="0" class="w-28 p-3 text-center text-xl font-mono font-bold border border-red-200 rounded-lg text-red-600 focus:ring-2 focus:ring-red-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100' : ''}" value="${data.committee.invalid_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateInvalidVotes(this)">
-                                <button onclick="incrementInvalidVote()" class="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:shadow-lg transition-all duration-200 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" ${isLocked ? 'disabled' : ''}><i class="fas fa-plus"></i></button>
-                            </div></div></div></div></div></div>
-                            
-                            <div class="space-y-6"><div class="bg-primary-800 text-white rounded-xl shadow-lg p-6 relative overflow-hidden"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div><div class="relative z-10">
-                                <div class="mb-4"><p class="text-primary-200 text-xs mb-1">إجمالي المقيدين باللجنة</p><h2 class="text-3xl font-bold font-mono tracking-wider" id="totalRegisteredDisplay">${reg.toLocaleString('en-US')}</h2></div>
-                                <div class="grid grid-cols-2 gap-3 border-t border-white/20 pt-3">
-                                    <div><p class="text-primary-200 text-[10px]">أصوات صحيحة</p><p id="validBallotsDisplay" class="text-xl font-bold font-mono">${validBallots}</p></div>
-                                    <div><p class="text-primary-200 text-[10px]">إجمالي الحضور</p><p id="totalTurnoutDisplay" class="text-xl font-bold font-mono">${totalTurnout}</p></div>
-                                </div>
-                                <div class="mt-3 bg-white/10 rounded-lg p-2 text-center"><span class="text-xs text-primary-200">إجمالي العلامات المرصودة: </span><span id="rawMarksDisplay" class="font-bold font-mono">${rawMarks}</span></div>
-                                <div class="mt-2 text-center"><span class="text-xs text-primary-200">نسبة المشاركة: </span><span id="participationDisplay" class="font-bold text-lg text-white">${rate}%</span></div>
-                            </div></div><div class="bg-white rounded-xl shadow-card border border-gray-100 p-6 h-96 flex flex-col"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-exclamation-triangle text-warning"></i>  رصد المخالفات الإنتخابية</h3><button onclick="showAddViolationModal()" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100 transition">+ تسجيل بلاغ</button></div><div id="violationsList" class="flex-1 overflow-y-auto space-y-3 pr-1"></div></div></div>
+                            <div class="mt-6 pt-6 border-t border-dashed border-gray-300"><div class="flex items-center p-4 border border-red-200 bg-red-50/30 rounded-lg"><div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center ml-4 text-red-500"><i class="fas fa-ban text-xl"></i></div><div class="flex-1"><h4 class="font-bold text-gray-800">الأصوات الباطلة</h4></div><div class="flex items-center gap-2 relative"><button onclick="decrementInvalidVote()" class="w-10 h-10 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition" ${isLocked ? 'disabled' : ''}><i class="fas fa-minus"></i></button><input type="number" id="invalidVotes" min="0" class="w-28 p-3 text-center text-xl font-mono font-bold border border-red-200 rounded-lg text-red-600 focus:ring-2 focus:ring-red-500 focus:outline-none transition-all ${isLocked ? 'bg-gray-100' : ''}" value="${data.committee.invalid_votes || 0}" ${isLocked ? 'disabled' : ''} onchange="updateInvalidVotes(this)"><button onclick="incrementInvalidVote()" class="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:shadow-lg transition-all duration-200 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" ${isLocked ? 'disabled' : ''}><i class="fas fa-plus"></i></button></div></div></div></div></div></div>
+                            <div class="space-y-6"><div class="bg-primary-800 text-white rounded-xl shadow-lg p-6 relative overflow-hidden"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div><div class="relative z-10"><div class="mb-4"><p class="text-primary-200 text-xs mb-1">إجمالي المقيدين باللجنة</p><h2 class="text-3xl font-bold font-mono tracking-wider" id="totalRegisteredDisplay">${reg.toLocaleString('en-US')}</h2></div><div class="grid grid-cols-2 gap-3 border-t border-white/20 pt-3"><div><p class="text-primary-200 text-[10px]">أصوات صحيحة</p><p id="validBallotsDisplay" class="text-xl font-bold font-mono">${validBallots}</p></div><div><p class="text-primary-200 text-[10px]">إجمالي الحضور</p><p id="totalTurnoutDisplay" class="text-xl font-bold font-mono">${totalTurnout}</p></div></div><div class="mt-3 bg-white/10 rounded-lg p-2 text-center"><span class="text-xs text-primary-200">إجمالي العلامات المرصودة: </span><span id="rawMarksDisplay" class="font-bold font-mono">${rawMarks}</span></div><div class="mt-2 text-center"><span class="text-xs text-primary-200">نسبة المشاركة: </span><span id="participationDisplay" class="font-bold text-lg text-white">${rate}%</span></div></div></div><div class="bg-white rounded-xl shadow-card border border-gray-100 p-6 h-96 flex flex-col"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fas fa-exclamation-triangle text-warning"></i>  رصد المخالفات الإنتخابية</h3><button onclick="showAddViolationModal()" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-bold hover:bg-red-100 transition">+ تسجيل بلاغ</button></div><div id="violationsList" class="flex-1 overflow-y-auto space-y-3 pr-1"></div></div></div>
                         </div>
                     </main>
                 </div>
@@ -1083,135 +896,47 @@
             return { committee: c.data, candidates, violations: viol.data };
         }
 
-        // NEW: Increment Vote Function
-        function incrementVote(candidateId) {
-            const input = document.getElementById(`vote-input-${candidateId}`);
-            if (input) {
-                let currentValue = parseInt(input.value) || 0;
-                input.value = currentValue + 1;
-                updateVote(candidateId, input); // Call existing logic
-            }
-        }
-
-        // NEW: Decrement Vote Function
-        function decrementVote(candidateId) {
-            const input = document.getElementById(`vote-input-${candidateId}`);
-            if (input) {
-                let currentValue = parseInt(input.value) || 0;
-                if(currentValue > 0) {
-                    input.value = currentValue - 1;
-                    updateVote(candidateId, input);
-                }
-            }
-        }
-
-        // NEW: Increment Invalid Vote Function
-        function incrementInvalidVote() {
-            const input = document.getElementById('invalidVotes');
-            if (input) {
-                let currentValue = parseInt(input.value) || 0;
-                input.value = currentValue + 1;
-                updateInvalidVotes(input); // Call existing logic
-            }
-        }
-
-        // NEW: Decrement Invalid Vote Function
-        function decrementInvalidVote() {
-            const input = document.getElementById('invalidVotes');
-            if (input) {
-                let currentValue = parseInt(input.value) || 0;
-                if(currentValue > 0) {
-                    input.value = currentValue - 1;
-                    updateInvalidVotes(input);
-                }
-            }
-        }
+        function incrementVote(candidateId) { const input = document.getElementById(`vote-input-${candidateId}`); if (input) { let currentValue = parseInt(input.value) || 0; input.value = currentValue + 1; updateVote(candidateId, input); } }
+        function decrementVote(candidateId) { const input = document.getElementById(`vote-input-${candidateId}`); if (input) { let currentValue = parseInt(input.value) || 0; if(currentValue > 0) { input.value = currentValue - 1; updateVote(candidateId, input); } } }
+        function incrementInvalidVote() { const input = document.getElementById('invalidVotes'); if (input) { let currentValue = parseInt(input.value) || 0; input.value = currentValue + 1; updateInvalidVotes(input); } }
+        function decrementInvalidVote() { const input = document.getElementById('invalidVotes'); if (input) { let currentValue = parseInt(input.value) || 0; if(currentValue > 0) { input.value = currentValue - 1; updateInvalidVotes(input); } } }
 
         async function updateVote(candidateId, input) {
             const count = parseInt(input.value) || 0;
             const statusEl = document.getElementById(`status-${candidateId}`);
             input.classList.add('input-saving'); statusEl.innerHTML = '<i class="fas fa-spinner fa-spin text-warning"></i>';
-            
-            // Optimistic UI Update
             updateLocalSummary();
-
             try {
-                // Update DB
                 const { data: existing } = await supabase.from('votes').select('id').eq('committee_id', currentUser.committeeId).eq('candidate_id', candidateId);
-                if (existing && existing.length > 0) {
-                    await supabase.from('votes').update({ count }).eq('committee_id', currentUser.committeeId).eq('candidate_id', candidateId);
-                } else {
-                    await supabase.from('votes').insert({ committee_id: currentUser.committeeId, candidate_id: candidateId, count, supervisor_id: currentUser.id });
-                }
-                
-                // NOTIFY ADMIN
-                await supabase.from('notifications').insert({
-                    message: `تحديث أصوات (لجنة ${currentUser.committeeId}) - مرشح رقم ${candidateId}`,
-                    type: 'vote'
-                });
-
-                input.classList.remove('input-saving'); input.classList.add('input-saved'); statusEl.innerHTML = '<i class="fas fa-check text-success"></i>';
-                setTimeout(() => { input.classList.remove('input-saved'); statusEl.innerHTML = ''; }, 1500); 
+                if (existing && existing.length > 0) { await supabase.from('votes').update({ count }).eq('committee_id', currentUser.committeeId).eq('candidate_id', candidateId); } else { await supabase.from('votes').insert({ committee_id: currentUser.committeeId, candidate_id: candidateId, count, supervisor_id: currentUser.id }); }
+                await supabase.from('notifications').insert({ message: `تحديث أصوات (لجنة ${currentUser.committeeId}) - مرشح رقم ${candidateId}`, type: 'vote' });
+                input.classList.remove('input-saving'); input.classList.add('input-saved'); statusEl.innerHTML = '<i class="fas fa-check text-success"></i>'; setTimeout(() => { input.classList.remove('input-saved'); statusEl.innerHTML = ''; }, 1500); 
             } catch (error) { console.error(error); input.classList.remove('input-saving'); input.classList.add('input-error'); statusEl.innerHTML = '<i class="fas fa-exclamation-circle text-danger"></i>'; }
         }
 
         async function updateInvalidVotes(input) {
-            input.classList.add('input-saving');
-            
-            // Optimistic UI Update
-            updateLocalSummary();
-
+            input.classList.add('input-saving'); updateLocalSummary();
             try {
                 await supabase.from('committees').update({ invalid_votes: parseInt(input.value) || 0 }).eq('id', currentUser.committeeId);
-                
-                // NOTIFY ADMIN
-                await supabase.from('notifications').insert({
-                    message: `تحديث أصوات باطلة (لجنة ${currentUser.committeeId})`,
-                    type: 'vote'
-                });
-
+                await supabase.from('notifications').insert({ message: `تحديث أصوات باطلة (لجنة ${currentUser.committeeId})`, type: 'vote' });
                 input.classList.remove('input-saving'); input.classList.add('input-saved'); setTimeout(() => input.classList.remove('input-saved'), 1500); 
             } catch (e) { input.classList.remove('input-saving'); input.classList.add('input-error'); }
         }
 
-        function renderObserverDashboard() {
-            const app = document.getElementById('app');
-            app.innerHTML = `${getSidebarHTML('المراقبة')}<div class="flex-1 p-10 text-center"><h2 class="text-2xl font-bold">لوحة المراقب</h2></div>`;
-        }
+        function renderObserverDashboard() { const app = document.getElementById('app'); app.innerHTML = `${getSidebarHTML('المراقبة')}<div class="flex-1 p-10 text-center"><h2 class="text-2xl font-bold">لوحة المراقب</h2></div>`; }
 
-        // ============================================
-        // 8. General Helpers & Realtime
-        // ============================================
         function toggleLock(shouldLock) {
             Swal.fire({ title: shouldLock ? 'تثبيت نهائي' : 'فك التثبيت', text: shouldLock ? "لن تتمكن من تعديل النتائج." : "سيتم فتح الحقول.", icon: 'question', showCancelButton: true, confirmButtonText: 'نعم', cancelButtonText: 'إلغاء' }).then(async (result) => {
-                if (result.isConfirmed) { 
-                    await supabase.from('committees').update({ is_finalized: shouldLock, finalized_at: shouldLock ? new Date() : null }).eq('id', currentUser.committeeId);
-                    
-                    // NOTIFICATION TRIGGER
-                    const msg = shouldLock ? `تم تثبيت نتائج لجنة ${currentUser.committeeId}` : `تم فك تثبيت لجنة ${currentUser.committeeId}`;
-                    await sendNotification(msg, 'lock');
-
-                    renderSupervisorDashboard(); 
-                }
+                if (result.isConfirmed) { await supabase.from('committees').update({ is_finalized: shouldLock, finalized_at: shouldLock ? new Date() : null }).eq('id', currentUser.committeeId); const msg = shouldLock ? `تم تثبيت نتائج لجنة ${currentUser.committeeId}` : `تم فك تثبيت لجنة ${currentUser.committeeId}`; await sendNotification(msg, 'lock'); renderSupervisorDashboard(); }
             });
         }
 
         function updateLocalSummary() {
-            const inputs = document.querySelectorAll('input[data-candidate-id]');
-            let rawMarks = 0; 
-            inputs.forEach(i => rawMarks += (parseInt(i.value) || 0));
-            
-            const invalid = parseInt(document.getElementById('invalidVotes').value) || 0;
-            const validBallots = Math.floor(rawMarks / 2);
-            const totalTurnout = validBallots + invalid;
-            
-            const regText = document.getElementById('totalRegisteredDisplay').innerText.replace(/,/g, '');
-            const registered = parseInt(regText) || 1;
-
-            document.getElementById('rawMarksDisplay').innerText = rawMarks;
-            document.getElementById('validBallotsDisplay').innerText = validBallots.toLocaleString('en-US');
-            document.getElementById('totalTurnoutDisplay').innerText = totalTurnout.toLocaleString('en-US');
-            document.getElementById('participationDisplay').innerText = ((totalTurnout / registered) * 100).toFixed(1) + '%';
+            const inputs = document.querySelectorAll('input[data-candidate-id]'); let rawMarks = 0; inputs.forEach(i => rawMarks += (parseInt(i.value) || 0));
+            const invalid = parseInt(document.getElementById('invalidVotes').value) || 0; const validBallots = Math.floor(rawMarks / 2); const totalTurnout = validBallots + invalid;
+            const regText = document.getElementById('totalRegisteredDisplay').innerText.replace(/,/g, ''); const registered = parseInt(regText) || 1;
+            document.getElementById('rawMarksDisplay').innerText = rawMarks; document.getElementById('validBallotsDisplay').innerText = validBallots.toLocaleString('en-US');
+            document.getElementById('totalTurnoutDisplay').innerText = totalTurnout.toLocaleString('en-US'); document.getElementById('participationDisplay').innerText = ((totalTurnout / registered) * 100).toFixed(1) + '%';
         }
 
         function renderViolationsList(list) {
@@ -1222,8 +947,7 @@
 
         function setupDragAndDrop() {
             const dropZone = document.getElementById('dropZone'); const fileInput = document.getElementById('fileInput');
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
-            dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-active'); });
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); }); dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-active'); });
             dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); handleFiles(e.dataTransfer.files); });
             fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); });
         }
@@ -1242,78 +966,24 @@
                 }
             });
         }
-
         window.removeFile = function(fileName, btn) { selectedFiles = selectedFiles.filter(f => f.name !== fileName); btn.parentElement.remove(); }
-
-        async function uploadImages() {
-            const urls = [];
-            for (const file of selectedFiles) {
-                const fileName = `committee_${currentUser.committeeId}/${Date.now()}_${Math.random().toString(36).substring(7)}_${file.name}`;
-                const { error } = await supabase.storage.from('violation-images').upload(fileName, file);
-                if (!error) { const { data } = supabase.storage.from('violation-images').getPublicUrl(fileName); if(data) urls.push(data.publicUrl); }
-            } return urls;
-        }
-
+        async function uploadImages() { const urls = []; for (const file of selectedFiles) { const fileName = `committee_${currentUser.committeeId}/${Date.now()}_${Math.random().toString(36).substring(7)}_${file.name}`; const { error } = await supabase.storage.from('violation-images').upload(fileName, file); if (!error) { const { data } = supabase.storage.from('violation-images').getPublicUrl(fileName); if(data) urls.push(data.publicUrl); } } return urls; }
         async function submitViolation() {
-            const notes = document.getElementById('violationText').value.trim();
-            if(!notes && !selectedFiles.length) { Swal.fire('تنبيه', 'أدخل ملاحظة أو صورة على الأقل', 'warning'); return; }
-            const btn = document.getElementById('submitViolBtn'); const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...'; btn.disabled = true;
-            try {
-                let imageUrls = []; if (selectedFiles.length > 0) imageUrls = await uploadImages();
-                await supabase.from('violation_reports').insert({ committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, notes, status: 'pending', images: imageUrls });
-                
-                // NOTIFY ADMIN
-                await sendNotification(`بلاغ مخالفة جديد من لجنة ${currentUser.committeeId}`, 'complaint');
-
-                closeViolationModal(); Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'تم الإرسال بنجاح', timer: 2000, showConfirmButton: false});
-            } catch (err) { Swal.fire('خطأ', 'حدث خطأ أثناء الإرسال', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+            const notes = document.getElementById('violationText').value.trim(); if(!notes && !selectedFiles.length) { Swal.fire('تنبيه', 'أدخل ملاحظة أو صورة على الأقل', 'warning'); return; }
+            const btn = document.getElementById('submitViolBtn'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...'; btn.disabled = true;
+            try { let imageUrls = []; if (selectedFiles.length > 0) imageUrls = await uploadImages(); await supabase.from('violation_reports').insert({ committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, notes, status: 'pending', images: imageUrls }); await sendNotification(`بلاغ مخالفة جديد من لجنة ${currentUser.committeeId}`, 'complaint'); closeViolationModal(); Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'تم الإرسال بنجاح', timer: 2000, showConfirmButton: false}); } catch (err) { Swal.fire('خطأ', 'حدث خطأ أثناء الإرسال', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
-
         function showAddViolationModal() { document.getElementById('violationText').value = ''; document.getElementById('previewArea').innerHTML = ''; selectedFiles = []; document.getElementById('violationModal').classList.remove('hidden'); }
         function closeViolationModal() { document.getElementById('violationModal').classList.add('hidden'); }
-        function windowCloseImageModal() { document.getElementById('imageModal').classList.add('hidden'); } 
-
-        // --- NEW: Sorting Reports Helper Functions ---
+        
         function openSortingModal() { document.getElementById('sortingModal').classList.remove('hidden'); clearSortingFile(); }
         function closeSortingModal() { document.getElementById('sortingModal').classList.add('hidden'); }
-        function handleSortingFile(input) {
-            if (input.files && input.files[0]) {
-                sortingFile = input.files[0];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('sortingImgDisp').src = e.target.result;
-                    document.getElementById('sortingPreview').classList.remove('hidden');
-                    document.getElementById('sortingDropZone').classList.add('hidden');
-                    document.getElementById('submitSortingBtn').disabled = false;
-                }; reader.readAsDataURL(sortingFile);
-            }
-        }
-        function clearSortingFile() {
-            sortingFile = null;
-            document.getElementById('sortingFileInput').value = '';
-            document.getElementById('sortingPreview').classList.add('hidden');
-            document.getElementById('sortingDropZone').classList.remove('hidden');
-            document.getElementById('submitSortingBtn').disabled = true;
-        }
+        function handleSortingFile(input) { if (input.files && input.files[0]) { sortingFile = input.files[0]; const reader = new FileReader(); reader.onload = (e) => { document.getElementById('sortingImgDisp').src = e.target.result; document.getElementById('sortingPreview').classList.remove('hidden'); document.getElementById('sortingDropZone').classList.add('hidden'); document.getElementById('submitSortingBtn').disabled = false; }; reader.readAsDataURL(sortingFile); } }
+        function clearSortingFile() { sortingFile = null; document.getElementById('sortingFileInput').value = ''; document.getElementById('sortingPreview').classList.add('hidden'); document.getElementById('sortingDropZone').classList.remove('hidden'); document.getElementById('submitSortingBtn').disabled = true; }
         async function submitSortingReport() {
             if (!sortingFile) return;
-            const btn = document.getElementById('submitSortingBtn'); const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...'; btn.disabled = true;
-            try {
-                const fileName = `sorting_${currentUser.committeeId}/${Date.now()}_${sortingFile.name}`;
-                const { error: uploadError } = await supabase.storage.from('violation-images').upload(fileName, sortingFile);
-                if (uploadError) throw uploadError;
-                const { data: urlData } = supabase.storage.from('violation-images').getPublicUrl(fileName);
-                await supabase.from('sorting_reports').insert({
-                    committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, image_url: urlData.publicUrl
-                });
-                
-                // NOTIFY ADMIN
-                await sendNotification(`تم رفع محضر فرز لجنة ${currentUser.committeeId}`, 'report');
-
-                closeSortingModal(); Swal.fire('تم بنجاح', 'تم رفع محضر الفرز', 'success');
-            } catch (error) { console.error(error); Swal.fire('خطأ', 'حدث خطأ أثناء الرفع', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+            const btn = document.getElementById('submitSortingBtn'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...'; btn.disabled = true;
+            try { const fileName = `sorting_${currentUser.committeeId}/${Date.now()}_${sortingFile.name}`; const { error: uploadError } = await supabase.storage.from('violation-images').upload(fileName, sortingFile); if (uploadError) throw uploadError; const { data: urlData } = supabase.storage.from('violation-images').getPublicUrl(fileName); await supabase.from('sorting_reports').insert({ committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, image_url: urlData.publicUrl }); await sendNotification(`تم رفع محضر فرز لجنة ${currentUser.committeeId}`, 'report'); closeSortingModal(); Swal.fire('تم بنجاح', 'تم رفع محضر الفرز', 'success'); } catch (error) { console.error(error); Swal.fire('خطأ', 'حدث خطأ أثناء الرفع', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
         function logout() { localStorage.removeItem('currentUser'); window.location.reload(); }
