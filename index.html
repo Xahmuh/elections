@@ -304,7 +304,8 @@
         const SUPABASE_URL = 'https://csluxuzaferlcvibftsw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbHV4dXphZmVybGN2aWJmdHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxODU1MjksImV4cCI6MjA4MDc2MTUyOX0.KQZTp9ZTVNWmuCGuXWwrFK6-ixWcz7tO_4fvXCC-b2w';
         
-        let supabase;
+        // تم إزالة تعريف let supabase هنا
+        
         let currentUser = null;
         let selectedFiles = []; 
         let sortingFile = null;
@@ -321,7 +322,12 @@
         // ============================================
         function initApp() {
             if (window.supabase) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                // التعديل هنا: استخدام const بدلاً من let وإنشاء العميل مرة واحدة
+                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                
+                // جعل supabase متاحاً عالمياً للدوال الأخرى باستخدام window.supabaseClient
+                window.supabaseClient = supabase;
+                
                 setTimeout(() => {
                     document.getElementById('loader').style.opacity = '0';
                     setTimeout(() => {
@@ -354,9 +360,9 @@
         function setupGlobalRealtime() {
             console.log("🔄 Attempting Realtime connection...");
             const indicator = document.getElementById('rt-indicator');
-            if(realtimeChannel) supabase.removeChannel(realtimeChannel);
+            if(realtimeChannel) window.supabaseClient.removeChannel(realtimeChannel);
 
-            realtimeChannel = supabase.channel('room-global-updates');
+            realtimeChannel = window.supabaseClient.channel('room-global-updates');
             const tables = ['votes', 'committees', 'violation_reports'];
             tables.forEach(table => {
                 realtimeChannel.on('postgres_changes', { event: '*', schema: 'public', table: table }, payload => {
@@ -377,7 +383,7 @@
             setInterval(async () => {
                 if (currentUser && currentUser.role === 'admin') await loadAdminData();
                 else if (currentUser && currentUser.role === 'supervisor') {
-                    const { data } = await supabase.from('committees').select('is_finalized').eq('id', currentUser.committeeId).single();
+                    const { data } = await window.supabaseClient.from('committees').select('is_finalized').eq('id', currentUser.committeeId).single();
                     if(data) {
                          const currentLocked = document.getElementById('invalidVotes') && document.getElementById('invalidVotes').disabled;
                          if(currentLocked !== data.is_finalized) renderSupervisorDashboard();
@@ -393,7 +399,7 @@
                 else if(table === 'committees') Toast.fire({ icon: 'info', title: 'تحديث بيانات لجنة' });
 
                 if (table === 'votes') {
-                    const { data: newVotes } = await supabase.from('votes').select('*');
+                    const { data: newVotes } = await window.supabaseClient.from('votes').select('*');
                     if (newVotes) { adminGlobalData.votes = newVotes; processAdminData(); }
                 } else { await loadAdminData(); }
             } else if (currentUser.role === 'supervisor') {
@@ -445,14 +451,14 @@
         // ============================================
         // 3. Notifications & Chat Logic
         // ============================================
-        async function sendNotification(message, type) { try { await supabase.from('notifications').insert({ message: message, type: type }); } catch (err) { console.error("Notification Error:", err); } }
+        async function sendNotification(message, type) { try { await window.supabaseClient.from('notifications').insert({ message: message, type: type }); } catch (err) { console.error("Notification Error:", err); } }
 
         function toggleNotifications() { const d = document.getElementById('notifDropdown'); if(d.classList.contains('hidden')) { d.classList.remove('hidden'); markNotifsRead(); } else { d.classList.add('hidden'); } }
 
         async function initNotificationSystem() {
-            const { data: notifs } = await supabase.from('notifications').select('*').order('created_at', {ascending:false}).limit(20);
+            const { data: notifs } = await window.supabaseClient.from('notifications').select('*').order('created_at', {ascending:false}).limit(20);
             updateNotifList(notifs || []);
-            supabase.channel('public_notifs').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
+            window.supabaseClient.channel('public_notifs').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, payload => {
                 notifSound.play().catch(()=>{});
                 document.getElementById('notifBadge').classList.remove('hidden');
                 const list = document.getElementById('notifList');
@@ -481,7 +487,7 @@
             return `<div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition flex gap-3 ${!n.is_read ? 'bg-blue-50/50' : ''}"><div class="mt-1"><i class="fas ${icon}"></i></div><div><p class="text-xs font-bold text-gray-800">${n.message}</p><span class="text-[10px] text-gray-400 font-mono">${new Date(n.created_at).toLocaleTimeString('ar-EG')}</span></div></div>`;
         }
 
-        async function markNotifsRead() { document.getElementById('notifBadge').classList.add('hidden'); document.getElementById('notifCount').innerText = '0'; await supabase.from('notifications').update({ is_read: true }).eq('is_read', false); }
+        async function markNotifsRead() { document.getElementById('notifBadge').classList.add('hidden'); document.getElementById('notifCount').innerText = '0'; await window.supabaseClient.from('notifications').update({ is_read: true }).eq('is_read', false); }
 
         const chatSidebar = document.getElementById("chatSidebar");
         const chatOverlay = document.getElementById("chatOverlay");
@@ -497,12 +503,12 @@
 
         async function initChatSystem() {
             chatMessages.innerHTML = '<div class="text-center text-gray-400 text-xs my-4">جاري التحميل...</div>';
-            const { data: history } = await supabase.from('messages').select('*').order('created_at', {ascending: true}).limit(100);
+            const { data: history } = await window.supabaseClient.from('messages').select('*').order('created_at', {ascending: true}).limit(100);
             chatMessages.innerHTML = '<div class="text-center text-gray-400 text-xs my-4">بداية المحادثة</div>';
             if(history) history.forEach(msg => appendMessage(msg));
             scrollChat();
 
-            supabase.channel('public_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            window.supabaseClient.channel('public_chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                 appendMessage(payload.new); scrollChat();
                 if(payload.new.sender !== currentUser.name) {
                     msgSound.play().catch(()=>{});
@@ -532,11 +538,11 @@
             try {
                 if(fileToSend) {
                     type = 'image'; const fileName = `chat/${Date.now()}_${Math.random().toString(36).substring(7)}`;
-                    const { error } = await supabase.storage.from('chat-images').upload(fileName, fileToSend);
-                    if(!error) { const { data } = supabase.storage.from('chat-images').getPublicUrl(fileName); mediaUrl = data.publicUrl; }
-                    else { await supabase.storage.from('violation-images').upload(fileName, fileToSend); const { data } = supabase.storage.from('violation-images').getPublicUrl(fileName); mediaUrl = data.publicUrl; }
+                    const { error } = await window.supabaseClient.storage.from('chat-images').upload(fileName, fileToSend);
+                    if(!error) { const { data } = window.supabaseClient.storage.from('chat-images').getPublicUrl(fileName); mediaUrl = data.publicUrl; }
+                    else { await window.supabaseClient.storage.from('violation-images').upload(fileName, fileToSend); const { data } = window.supabaseClient.storage.from('violation-images').getPublicUrl(fileName); mediaUrl = data.publicUrl; }
                 }
-                await supabase.from('messages').insert({ sender: currentUser.name, message: text, type: type, media_url: mediaUrl });
+                await window.supabaseClient.from('messages').insert({ sender: currentUser.name, message: text, type: type, media_url: mediaUrl });
             } catch(err) { console.error("Chat Error", err); }
         }
         if(chatInput) chatInput.addEventListener("keypress", function(e) { if (e.key === "Enter") sendChatMessage(); });
@@ -673,9 +679,9 @@
         async function loadAdminData() {
             try {
                 const [commRes, candRes, voteRes] = await Promise.all([
-                    supabase.from('committees').select('*').order('id', {ascending: true}),
-                    supabase.from('candidates').select('*').order('id'),
-                    supabase.from('votes').select('*')
+                    window.supabaseClient.from('committees').select('*').order('id', {ascending: true}),
+                    window.supabaseClient.from('candidates').select('*').order('id'),
+                    window.supabaseClient.from('votes').select('*')
                 ]);
                 adminGlobalData.committees = commRes.data; adminGlobalData.candidates = candRes.data; adminGlobalData.votes = voteRes.data;
                 processAdminData();
@@ -861,7 +867,7 @@
                         </div>
                     </main>
                 </div>`;
-            const { data: reports, error } = await supabase.from('violation_reports').select('*').order('created_at', { ascending: false });
+            const { data: reports, error } = await window.supabaseClient.from('violation_reports').select('*').order('created_at', { ascending: false });
             const grid = document.getElementById('violationsGrid'); grid.innerHTML = '';
             if (error || !reports.length) { grid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-10"><p>لا توجد مخالفات</p></div>`; return; }
             reports.forEach(r => {
@@ -889,7 +895,7 @@
                     </main>
                 </div>
             `;
-            const { data: reports, error } = await supabase.from('sorting_reports').select('*').order('created_at', { ascending: false });
+            const { data: reports, error } = await window.supabaseClient.from('sorting_reports').select('*').order('created_at', { ascending: false });
             const grid = document.getElementById('sortingGrid');
             grid.innerHTML = '';
             if (error || !reports || reports.length === 0) { grid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-10"><i class="fas fa-folder-open text-4xl mb-4"></i><p>لا توجد محاضر مرفوعة حتى الآن</p></div>`; return; }
@@ -963,7 +969,7 @@
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault(); const btn = document.getElementById('loginBtn'); btn.innerHTML = 'جاري التحقق...'; btn.disabled = true;
                 try {
-                    const { data: users, error } = await supabase.from('users').select('*').eq('username', document.getElementById('username').value.trim()).eq('password_hash', document.getElementById('password').value).limit(1);
+                    const { data: users, error } = await window.supabaseClient.from('users').select('*').eq('username', document.getElementById('username').value.trim()).eq('password_hash', document.getElementById('password').value).limit(1);
                     if (error || !users.length) throw new Error('Invalid credentials');
                     currentUser = { id: users[0].id, name: users[0].name, role: users[0].role, committeeId: users[0].assigned_committee_id };
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -1017,10 +1023,10 @@
         async function loadSupervisorData() {
             const cId = currentUser.committeeId;
             const [c, cand, v, viol] = await Promise.all([
-                supabase.from('committees').select('*').eq('id', cId).single(),
-                supabase.from('candidates').select('*').order('id'),
-                supabase.from('votes').select('*').eq('committee_id', cId),
-                supabase.from('violation_reports').select('*').eq('committee_id', cId).order('created_at', {ascending: false})
+                window.supabaseClient.from('committees').select('*').eq('id', cId).single(),
+                window.supabaseClient.from('candidates').select('*').order('id'),
+                window.supabaseClient.from('votes').select('*').eq('committee_id', cId),
+                window.supabaseClient.from('violation_reports').select('*').eq('committee_id', cId).order('created_at', {ascending: false})
             ]);
             const candidates = cand.data.map(candidate => {
                 const vote = v.data.find(vote => vote.candidate_id === candidate.id);
@@ -1040,9 +1046,9 @@
             input.classList.add('input-saving'); statusEl.innerHTML = '<i class="fas fa-spinner fa-spin text-warning"></i>';
             updateLocalSummary();
             try {
-                const { data: existing } = await supabase.from('votes').select('id').eq('committee_id', currentUser.committeeId).eq('candidate_id', candidateId);
-                if (existing && existing.length > 0) { await supabase.from('votes').update({ count }).eq('committee_id', currentUser.committeeId).eq('candidate_id', candidateId); } else { await supabase.from('votes').insert({ committee_id: currentUser.committeeId, candidate_id: candidateId, count, supervisor_id: currentUser.id }); }
-                await supabase.from('notifications').insert({ message: `تحديث أصوات (لجنة ${currentUser.committeeId}) - مرشح رقم ${candidateId}`, type: 'vote' });
+                const { data: existing } = await window.supabaseClient.from('votes').select('id').eq('committee_id', currentUser.committeeId).eq('candidate_id', candidateId);
+                if (existing && existing.length > 0) { await window.supabaseClient.from('votes').update({ count }).eq('committee_id', currentUser.committeeId).eq('candidate_id', candidateId); } else { await window.supabaseClient.from('votes').insert({ committee_id: currentUser.committeeId, candidate_id: candidateId, count, supervisor_id: currentUser.id }); }
+                await window.supabaseClient.from('notifications').insert({ message: `تحديث أصوات (لجنة ${currentUser.committeeId}) - مرشح رقم ${candidateId}`, type: 'vote' });
                 input.classList.remove('input-saving'); input.classList.add('input-saved'); statusEl.innerHTML = '<i class="fas fa-check text-success"></i>'; setTimeout(() => { input.classList.remove('input-saved'); statusEl.innerHTML = ''; }, 1500); 
             } catch (error) { console.error(error); input.classList.remove('input-saving'); input.classList.add('input-error'); statusEl.innerHTML = '<i class="fas fa-exclamation-circle text-danger"></i>'; }
         }
@@ -1050,8 +1056,8 @@
         async function updateInvalidVotes(input) {
             input.classList.add('input-saving'); updateLocalSummary();
             try {
-                await supabase.from('committees').update({ invalid_votes: parseInt(input.value) || 0 }).eq('id', currentUser.committeeId);
-                await supabase.from('notifications').insert({ message: `تحديث أصوات باطلة (لجنة ${currentUser.committeeId})`, type: 'vote' });
+                await window.supabaseClient.from('committees').update({ invalid_votes: parseInt(input.value) || 0 }).eq('id', currentUser.committeeId);
+                await window.supabaseClient.from('notifications').insert({ message: `تحديث أصوات باطلة (لجنة ${currentUser.committeeId})`, type: 'vote' });
                 input.classList.remove('input-saving'); input.classList.add('input-saved'); setTimeout(() => input.classList.remove('input-saved'), 1500); 
             } catch (e) { input.classList.remove('input-saving'); input.classList.add('input-error'); }
         }
@@ -1060,7 +1066,7 @@
 
         function toggleLock(shouldLock) {
             Swal.fire({ title: shouldLock ? 'تثبيت نهائي' : 'فك التثبيت', text: shouldLock ? "لن تتمكن من تعديل النتائج." : "سيتم فتح الحقول.", icon: 'question', showCancelButton: true, confirmButtonText: 'نعم', cancelButtonText: 'إلغاء' }).then(async (result) => {
-                if (result.isConfirmed) { await supabase.from('committees').update({ is_finalized: shouldLock, finalized_at: shouldLock ? new Date() : null }).eq('id', currentUser.committeeId); const msg = shouldLock ? `تم تثبيت نتائج لجنة ${currentUser.committeeId}` : `تم فك تثبيت لجنة ${currentUser.committeeId}`; await sendNotification(msg, 'lock'); renderSupervisorDashboard(); }
+                if (result.isConfirmed) { await window.supabaseClient.from('committees').update({ is_finalized: shouldLock, finalized_at: shouldLock ? new Date() : null }).eq('id', currentUser.committeeId); const msg = shouldLock ? `تم تثبيت نتائج لجنة ${currentUser.committeeId}` : `تم فك تثبيت لجنة ${currentUser.committeeId}`; await sendNotification(msg, 'lock'); renderSupervisorDashboard(); }
             });
         }
 
@@ -1100,11 +1106,11 @@
             });
         }
         window.removeFile = function(fileName, btn) { selectedFiles = selectedFiles.filter(f => f.name !== fileName); btn.parentElement.remove(); }
-        async function uploadImages() { const urls = []; for (const file of selectedFiles) { const fileName = `committee_${currentUser.committeeId}/${Date.now()}_${Math.random().toString(36).substring(7)}_${file.name}`; const { error } = await supabase.storage.from('violation-images').upload(fileName, file); if (!error) { const { data } = supabase.storage.from('violation-images').getPublicUrl(fileName); if(data) urls.push(data.publicUrl); } } return urls; }
+        async function uploadImages() { const urls = []; for (const file of selectedFiles) { const fileName = `committee_${currentUser.committeeId}/${Date.now()}_${Math.random().toString(36).substring(7)}_${file.name}`; const { error } = await window.supabaseClient.storage.from('violation-images').upload(fileName, file); if (!error) { const { data } = window.supabaseClient.storage.from('violation-images').getPublicUrl(fileName); if(data) urls.push(data.publicUrl); } } return urls; }
         async function submitViolation() {
             const notes = document.getElementById('violationText').value.trim(); if(!notes && !selectedFiles.length) { Swal.fire('تنبيه', 'أدخل ملاحظة أو صورة على الأقل', 'warning'); return; }
             const btn = document.getElementById('submitViolBtn'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...'; btn.disabled = true;
-            try { let imageUrls = []; if (selectedFiles.length > 0) imageUrls = await uploadImages(); await supabase.from('violation_reports').insert({ committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, notes, status: 'pending', images: imageUrls }); await sendNotification(`بلاغ مخالفة جديد من لجنة ${currentUser.committeeId}`, 'complaint'); closeViolationModal(); Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'تم الإرسال بنجاح', timer: 2000, showConfirmButton: false}); } catch (err) { Swal.fire('خطأ', 'حدث خطأ أثناء الإرسال', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+            try { let imageUrls = []; if (selectedFiles.length > 0) imageUrls = await uploadImages(); await window.supabaseClient.from('violation_reports').insert({ committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, notes, status: 'pending', images: imageUrls }); await sendNotification(`بلاغ مخالفة جديد من لجنة ${currentUser.committeeId}`, 'complaint'); closeViolationModal(); Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'تم الإرسال بنجاح', timer: 2000, showConfirmButton: false}); } catch (err) { Swal.fire('خطأ', 'حدث خطأ أثناء الإرسال', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
         function showAddViolationModal() { document.getElementById('violationText').value = ''; document.getElementById('previewArea').innerHTML = ''; selectedFiles = []; document.getElementById('violationModal').classList.remove('hidden'); }
         function closeViolationModal() { document.getElementById('violationModal').classList.add('hidden'); }
@@ -1116,7 +1122,7 @@
         async function submitSortingReport() {
             if (!sortingFile) return;
             const btn = document.getElementById('submitSortingBtn'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...'; btn.disabled = true;
-            try { const fileName = `sorting_${currentUser.committeeId}/${Date.now()}_${sortingFile.name}`; const { error: uploadError } = await supabase.storage.from('violation-images').upload(fileName, sortingFile); if (uploadError) throw uploadError; const { data: urlData } = supabase.storage.from('violation-images').getPublicUrl(fileName); await supabase.from('sorting_reports').insert({ committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, image_url: urlData.publicUrl }); await sendNotification(`تم رفع محضر فرز لجنة ${currentUser.committeeId}`, 'report'); closeSortingModal(); Swal.fire('تم بنجاح', 'تم رفع محضر الفرز', 'success'); } catch (error) { console.error(error); Swal.fire('خطأ', 'حدث خطأ أثناء الرفع', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+            try { const fileName = `sorting_${currentUser.committeeId}/${Date.now()}_${sortingFile.name}`; const { error: uploadError } = await window.supabaseClient.storage.from('violation-images').upload(fileName, sortingFile); if (uploadError) throw uploadError; const { data: urlData } = window.supabaseClient.storage.from('violation-images').getPublicUrl(fileName); await window.supabaseClient.from('sorting_reports').insert({ committee_id: currentUser.committeeId, supervisor_id: currentUser.id, supervisor_name: currentUser.name, image_url: urlData.publicUrl }); await sendNotification(`تم رفع محضر فرز لجنة ${currentUser.committeeId}`, 'report'); closeSortingModal(); Swal.fire('تم بنجاح', 'تم رفع محضر الفرز', 'success'); } catch (error) { console.error(error); Swal.fire('خطأ', 'حدث خطأ أثناء الرفع', 'error'); } finally { btn.innerHTML = originalText; btn.disabled = false; }
         }
 
         function logout() { localStorage.removeItem('currentUser'); window.location.reload(); }
