@@ -683,13 +683,16 @@
                     window.supabaseClient.from('candidates').select('*').order('id'),
                     window.supabaseClient.from('votes').select('*')
                 ]);
-                adminGlobalData.committees = commRes.data; adminGlobalData.candidates = candRes.data; adminGlobalData.votes = voteRes.data;
+                adminGlobalData.committees = commRes.data;
+                adminGlobalData.candidates = candRes.data;
+                adminGlobalData.votes = voteRes.data;
                 processAdminData();
-            } catch (error) { console.error("Admin Load Error:", error); }
+            } catch (error) {
+                console.error("Admin Load Error:", error);
+            }
         }
 
         function processAdminData() {
-            // Updated stats object to include cand4Votes per district
             let stats = { 
                 totalRegistered: 0, 
                 totalValid: 0, 
@@ -698,14 +701,20 @@
                 east: { valid: 0, registered: 0, cand4Votes: 0 }, 
                 candidateVotes: {} 
             };
-            adminGlobalData.candidates.forEach(c => stats.candidateVotes[c.id] = { name: c.name, count: 0 });
-            
+
+            adminGlobalData.candidates.forEach(c => {
+                stats.candidateVotes[c.id] = { name: c.name, count: 0 };
+            });
+
             adminGlobalData.committees.forEach(c => {
-                const cId = parseInt(c.id); 
-                const registered = c.total_registered_voters || 0; 
+                const cId = parseInt(c.id);
+                const registered = c.total_registered_voters || 0;
                 const invalid = c.invalid_votes || 0;
-                const committeeVotes = adminGlobalData.votes.filter(v => v.committee_id === c.id);
-                
+
+                const committeeVotes = adminGlobalData.votes.filter(
+                    v => v.committee_id === c.id
+                );
+
                 c.cand1Votes = committeeVotes.find(v => v.candidate_id === 1)?.count || 0;
                 c.cand2Votes = committeeVotes.find(v => v.candidate_id === 2)?.count || 0;
                 c.cand3Votes = committeeVotes.find(v => v.candidate_id === 3)?.count || 0;
@@ -713,68 +722,122 @@
 
                 const rawVoteSum = committeeVotes.reduce((sum, v) => sum + (v.count || 0), 0);
                 const committeeValid = Math.floor(rawVoteSum / 2);
-                c.calculatedValid = committeeValid;
 
-                stats.totalRegistered += registered; 
-                stats.totalInvalid += invalid; 
+                stats.totalRegistered += registered;
+                stats.totalInvalid += invalid;
                 stats.totalValid += committeeValid;
-                
-                // Track stats per district
-                if (cId <= 34) { 
-                    stats.west.valid += committeeValid; // Keep valid purely as valid count
-                    stats.west.registered += registered; 
-                    stats.west.cand4Votes += c.cand4Votes; // Track cand 4 West votes
-                } else { 
-                    stats.east.valid += committeeValid; 
+
+                if (cId <= 34) {
+                    stats.west.valid += committeeValid;
+                    stats.west.registered += registered;
+                    stats.west.cand4Votes += c.cand4Votes;
+                } else {
+                    stats.east.valid += committeeValid;
                     stats.east.registered += registered;
-                    stats.east.cand4Votes += c.cand4Votes; // Track cand 4 East votes
+                    stats.east.cand4Votes += c.cand4Votes;
                 }
-                
-                committeeVotes.forEach(v => { if (stats.candidateVotes[v.candidate_id]) stats.candidateVotes[v.candidate_id].count += (v.count || 0); });
+
+                committeeVotes.forEach(v => {
+                    if (stats.candidateVotes[v.candidate_id]) {
+                        stats.candidateVotes[v.candidate_id].count += (v.count || 0);
+                    }
+                });
             });
+
             updateAdminUI(stats);
         }
 
+        
         function updateAdminUI(stats) {
-            if(document.getElementById('totalRegistered')) document.getElementById('totalRegistered').innerText = stats.totalRegistered.toLocaleString();
-            if(document.getElementById('totalValid')) document.getElementById('totalValid').innerText = stats.totalValid.toLocaleString();
-            if(document.getElementById('totalInvalid')) document.getElementById('totalInvalid').innerText = stats.totalInvalid.toLocaleString();
-            
-            const totalTurnout = stats.totalValid + stats.totalInvalid;
-            const rate = stats.totalRegistered ? ((totalTurnout / stats.totalRegistered) * 100).toFixed(1) : 0;
-            if(document.getElementById('participationRate')) document.getElementById('participationRate').innerText = `${rate}%`;
-            if(document.getElementById('invalidBar')) document.getElementById('invalidBar').style.width = `${(stats.totalInvalid / totalTurnout * 100) || 0}%`;
-            
-            if(document.getElementById('westVotes')) document.getElementById('westVotes').innerText = stats.west.valid.toLocaleString();
-            if(document.getElementById('eastVotes')) document.getElementById('eastVotes').innerText = stats.east.valid.toLocaleString();
-            if(document.getElementById('westBar')) document.getElementById('westBar').style.width = `${stats.west.registered ? ((stats.west.valid / stats.west.registered) * 100).toFixed(1) : 0}%`;
-            if(document.getElementById('eastBar')) document.getElementById('eastBar').style.width = `${stats.east.registered ? ((stats.east.valid / stats.east.registered) * 100).toFixed(1) : 0}%`;
-            if(document.getElementById('westRate')) document.getElementById('westRate').innerText = `مشاركة: ${stats.west.registered ? ((stats.west.valid / stats.west.registered) * 100).toFixed(1) : 0}%`;
-            if(document.getElementById('eastRate')) document.getElementById('eastRate').innerText = `مشاركة: ${stats.east.registered ? ((stats.east.valid / stats.east.registered) * 100).toFixed(1) : 0}%`;
-            
-            const cand4Id = 4; const cand4Data = stats.candidateVotes[cand4Id];
-            if (cand4Data) {
-                if(document.getElementById('cand4Total')) document.getElementById('cand4Total').innerText = cand4Data.count.toLocaleString();
-                if(document.getElementById('cand4Name')) document.getElementById('cand4Name').innerText = cand4Data.name;
-                
-                const totalRaw = stats.totalValid * 2;
-                if(document.getElementById('cand4Percent')) document.getElementById('cand4Percent').innerText = `${totalRaw > 0 ? ((cand4Data.count / totalRaw) * 100).toFixed(1) : 0}%`;
+            if(document.getElementById('totalRegistered'))
+                document.getElementById('totalRegistered').innerText = stats.totalRegistered.toLocaleString();
 
-                // Update New District Percentages for Candidate 4
+            if(document.getElementById('totalValid'))
+                document.getElementById('totalValid').innerText = stats.totalValid.toLocaleString();
+
+            if(document.getElementById('totalInvalid'))
+                document.getElementById('totalInvalid').innerText = stats.totalInvalid.toLocaleString();
+
+            const totalTurnout = stats.totalValid + stats.totalInvalid;
+            const rate = stats.totalRegistered
+                ? ((totalTurnout / stats.totalRegistered) * 100).toFixed(1)
+                : 0;
+
+            if(document.getElementById('participationRate'))
+                document.getElementById('participationRate').innerText = `${rate}%`;
+
+            if(document.getElementById('invalidBar'))
+                document.getElementById('invalidBar').style.width =
+                    `${(stats.totalInvalid / totalTurnout * 100) || 0}%`;
+
+            if(document.getElementById('westVotes'))
+                document.getElementById('westVotes').innerText = stats.west.valid.toLocaleString();
+
+            if(document.getElementById('eastVotes'))
+                document.getElementById('eastVotes').innerText = stats.east.valid.toLocaleString();
+
+            if(document.getElementById('westBar'))
+                document.getElementById('westBar').style.width =
+                    `${stats.west.registered ? ((stats.west.valid / stats.west.registered) * 100).toFixed(1) : 0}%`;
+
+            if(document.getElementById('eastBar'))
+                document.getElementById('eastBar').style.width =
+                    `${stats.east.registered ? ((stats.east.valid / stats.east.registered) * 100).toFixed(1) : 0}%`;
+
+            if(document.getElementById('westRate'))
+                document.getElementById('westRate').innerText =
+                    `مشاركة: ${stats.west.registered ? ((stats.west.valid / stats.west.registered) * 100).toFixed(1) : 0}%`;
+
+            if(document.getElementById('eastRate'))
+                document.getElementById('eastRate').innerText =
+                    `مشاركة: ${stats.east.registered ? ((stats.east.valid / stats.east.registered) * 100).toFixed(1) : 0}%`;
+
+            const cand4Id = 4;
+            const cand4Data = stats.candidateVotes[cand4Id];
+
+            if (cand4Data) {
+                if(document.getElementById('cand4Total'))
+                    document.getElementById('cand4Total').innerText =
+                        cand4Data.count.toLocaleString();
+
+                if(document.getElementById('cand4Name'))
+                    document.getElementById('cand4Name').innerText =
+                        cand4Data.name;
+
                 const westRaw = stats.west.valid * 2;
                 const eastRaw = stats.east.valid * 2;
-                
-                if(document.getElementById('cand4WestPercent')) {
-                    const wPct = westRaw > 0 ? ((stats.west.cand4Votes / westRaw) * 100).toFixed(1) : 0;
-                    document.getElementById('cand4WestPercent').innerText = `${wPct}%`;
-                }
-                if(document.getElementById('cand4EastPercent')) {
-                    const ePct = eastRaw > 0 ? ((stats.east.cand4Votes / eastRaw) * 100).toFixed(1) : 0;
-                    document.getElementById('cand4EastPercent').innerText = `${ePct}%`;
-                }
+
+                const westPct = westRaw > 0
+                    ? ((stats.west.cand4Votes / westRaw) * 100)
+                    : 0;
+
+                const eastPct = eastRaw > 0
+                    ? ((stats.east.cand4Votes / eastRaw) * 100)
+                    : 0;
+
+                // ✅ النسبة العامة = نسبة غرب + نسبة شرق
+                const totalPct = westPct + eastPct;
+
+                if(document.getElementById('cand4WestPercent'))
+                    document.getElementById('cand4WestPercent').innerText =
+                        `${westPct.toFixed(1)}%`;
+
+                if(document.getElementById('cand4EastPercent'))
+                    document.getElementById('cand4EastPercent').innerText =
+                        `${eastPct.toFixed(1)}%`;
+
+                if(document.getElementById('cand4Percent'))
+                    document.getElementById('cand4Percent').innerText =
+                        `${totalPct.toFixed(1)}%`;
             }
-            renderAdminCharts(stats); filterDashboardTable(); if(document.getElementById('pageGrid')) filterSharedGrid('page');
+
+            renderAdminCharts(stats);
+            filterDashboardTable();
+
+            if(document.getElementById('pageGrid'))
+                filterSharedGrid('page');
         }
+
 
         function renderAdminCharts(stats) {
             if(!document.querySelector("#candidatesChart")) return;
